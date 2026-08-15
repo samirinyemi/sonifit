@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONIFIT — Everyone Deserves A Lane</title>
+<meta name="description" content="Twelve products. Built for the distance, not the photograph. A signature running collection by Soni Labs Studio.">
+<link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script>
+  /* set before first paint so the hero never flashes its finished state */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('js-anim');
+  }
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#collection">Skip to the collection</a>
+
+<!-- ============================ HERO ============================ -->
+<header class="hero" id="top" data-node-id="48:1095">
+  <video class="hero__video" src="assets/video/hero.mp4" poster="assets/img/hero-poster.jpg"
+         autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
+  <div class="hero__scrim" aria-hidden="true"></div>
+
+  <div class="hero__inner">
+
+    <nav class="nav" data-node-id="48:1100" aria-label="Primary">
+      <a class="nav__brand" href="#top" data-anim>MADE BY SONI</a>
+      <a class="nav__mark" href="#top" aria-label="SONIFIT home" data-anim>
+        <img src="assets/svg/logo-mark.svg" alt="">
+      </a>
+      <ul class="nav__links">
+        <li data-anim><a href="#cta">IMPACT</a></li>
+        <li data-anim><a href="#athletes">ATHLETES</a></li>
+      </ul>
+    </nav>
+
+    <div class="hero__foot">
+      <p class="hero__blurb" data-anim data-node-id="48:1106">Created by the soni labs studio, this signature collection is to celebrate and brings inspiration and innovation to every athlete in the world.</p>
+
+      <div class="hero__meta">
+        <span class="label hero__meta--a" data-anim data-node-id="48:1099">EVERYONE DESERVES A LANE</span>
+        <span class="label hero__meta--b" data-anim data-node-id="48:1107">WHY</span>
+        <a class="label hero__meta--c" href="#collection" data-anim data-node-id="48:1108">SEE THE COLLECTION</a>
+        <span class="label hero__meta--d" data-anim data-node-id="48:1109">&copy; 2026</span>
+      </div>
+
+      <hr class="rule" data-node-id="48:1098">
+
+      <h1 class="hero__wordmark" data-node-id="48:1097">
+        <!-- inlined so each letter can be animated individually -->
+        <svg class="wordmark" viewBox="0 0 1400 265" role="img" aria-label="SONIFIT" xmlns="http://www.w3.org/2000/svg">
+          <g class="wordmark__letter" data-letter="S"><path d="M112.861 265C95.7607 265 80.3706 263.062 66.6905 259.187C53.0104 255.312 41.2683 249.727 31.4642 242.432C21.6602 235.138 14.0221 226.133 8.55006 215.419C3.30602 204.477 0.456003 192.168 0 178.49H58.8244C60.4204 192.396 65.6645 202.54 74.5565 208.923C83.6766 215.305 96.4447 218.497 112.861 218.497C118.561 218.497 124.033 217.927 129.277 216.787C134.521 215.647 139.195 213.938 143.299 211.658C147.403 209.151 150.595 206.073 152.875 202.426C155.383 198.551 156.637 193.991 156.637 188.748C156.637 183.277 155.269 178.718 152.533 175.071C150.025 171.424 146.263 168.346 141.247 165.839C136.231 163.331 130.075 161.166 122.779 159.342C115.483 157.29 107.275 155.239 98.1547 153.187C85.8426 150.452 74.2145 147.374 63.2704 143.955C52.3264 140.535 42.7503 136.09 34.5422 130.619C26.3342 124.92 19.8361 117.854 15.0481 109.419C10.4881 100.757 8.20806 89.815 8.20806 76.5935C8.20806 63.372 10.7161 51.9742 15.7321 42.4C20.7481 32.8258 27.7022 24.9613 36.5943 18.8065C45.4863 12.4237 55.9744 7.75054 68.0585 4.7871C80.1426 1.5957 93.2526 0 107.389 0C121.297 0 134.179 1.5957 146.035 4.7871C157.891 7.97849 168.151 12.7656 176.815 19.1484C185.479 25.5312 192.433 33.5097 197.677 43.0839C202.921 52.4301 205.999 63.372 206.911 75.9097H149.797C148.201 65.8796 143.641 58.129 136.117 52.6581C128.593 47.1871 118.447 44.4516 105.679 44.4516C93.5947 44.4516 83.9046 46.8452 76.6085 51.6323C69.3125 56.4194 65.6645 62.8022 65.6645 70.7807C65.6645 75.7957 67.0325 79.8989 69.7685 83.0903C72.5045 86.2817 76.4945 89.1312 81.7386 91.6387C86.9826 93.9183 93.3666 95.9699 100.891 97.7936C108.643 99.6172 117.535 101.669 127.567 103.948C138.967 106.456 149.911 109.533 160.399 113.181C171.115 116.6 180.463 121.273 188.443 127.2C196.651 133.127 203.149 140.535 207.937 149.426C212.953 158.316 215.461 169.486 215.461 182.935C215.461 196.157 212.839 207.897 207.595 218.155C202.351 228.185 195.055 236.733 185.707 243.8C176.587 250.639 165.757 255.882 153.217 259.529C140.905 263.176 127.453 265 112.861 265Z"/></g>
+          <g class="wordmark__letter" data-letter="O"><path d="M364.379 265C344.999 265 327.557 261.695 312.053 255.084C296.549 248.473 283.325 239.241 272.381 227.387C261.437 215.533 253.001 201.514 247.073 185.329C241.373 169.144 238.523 151.591 238.523 132.671C238.523 113.523 241.373 95.8559 247.073 79.671C253.001 63.486 261.437 49.5806 272.381 37.9548C283.325 26.1011 296.549 16.8688 312.053 10.2581C327.557 3.41935 344.999 0 364.379 0C383.532 0 400.86 3.41935 416.364 10.2581C431.868 16.8688 445.092 26.1011 456.036 37.9548C466.98 49.5806 475.302 63.486 481.002 79.671C486.93 95.8559 489.894 113.523 489.894 132.671C489.894 151.591 486.93 169.144 481.002 185.329C475.302 201.514 466.98 215.533 456.036 227.387C445.092 239.241 431.868 248.473 416.364 255.084C400.86 261.695 383.532 265 364.379 265ZM364.721 217.129C375.666 217.129 385.242 214.963 393.45 210.632C401.658 206.301 408.498 200.374 413.97 192.852C419.442 185.329 423.546 176.439 426.282 166.181C429.018 155.923 430.386 144.753 430.386 132.671C430.386 120.589 429.018 109.419 426.282 99.1613C423.546 88.6753 419.442 79.557 413.97 71.8064C408.498 64.0559 401.658 58.0151 393.45 53.6839C385.242 49.3527 375.666 47.1871 364.721 47.1871C353.777 47.1871 344.087 49.3527 335.651 53.6839C327.443 58.0151 320.489 64.0559 314.789 71.8064C309.317 79.557 305.099 88.6753 302.135 99.1613C299.399 109.419 298.031 120.589 298.031 132.671C298.031 144.753 299.399 155.923 302.135 166.181C305.099 176.439 309.317 185.329 314.789 192.852C320.489 200.374 327.443 206.301 335.651 210.632C344.087 214.963 353.777 217.129 364.721 217.129Z"/></g>
+          <g class="wordmark__letter" data-letter="N"><path d="M522.326 4.44517H581.834L648.867 114.89C652.743 121.501 656.619 128.682 660.495 136.432C664.599 143.955 668.361 151.135 671.781 157.974L683.751 181.91H684.435C683.751 173.247 683.181 164.471 682.725 155.581C682.269 148.058 681.927 139.966 681.699 131.303C681.471 122.641 681.357 114.662 681.357 107.368V4.44517H737.103V258.845H677.253L610.904 149.768C607.028 143.385 603.038 136.204 598.934 128.226C594.83 120.247 591.068 112.839 587.648 106C583.544 98.0215 579.554 89.929 575.678 81.7226H574.994C575.45 90.6129 575.906 99.5032 576.362 108.394C576.818 115.916 577.16 124.009 577.388 132.671C577.844 141.333 578.072 149.312 578.072 156.606V258.845H522.326V4.44517Z"/></g>
+          <g class="wordmark__letter" data-letter="I"><path d="M779.829 4.44517H838.312V258.845H779.829V4.44517Z"/></g>
+          <g class="wordmark__letter" data-letter="F"><path d="M881.695 4.44517H1068.43V54.0258H939.836V109.419H1047.22V156.948H939.836V258.845H881.695V4.44517Z"/></g>
+          <g class="wordmark__letter" data-letter="I"><path d="M1100.46 4.44517H1158.94V258.845H1100.46V4.44517Z"/></g>
+          <g class="wordmark__letter" data-letter="T"><path d="M1190.01 4.44517H1400V54.0258H1324.08V258.845H1265.59V54.0258H1190.01V4.44517Z"/></g>
+        </svg>
+      </h1>
+    </div>
+
+  </div>
+</header>
+
+<main>
+
+  <!-- ============================ ABOUT ============================ -->
+  <section class="about" id="about" data-node-id="48:1093">
+    <div class="shell">
+      <p class="statement about__text" data-node-id="48:1094">A lane does not negotiate. It gives every runner the same width, the same distance, and the same start. It is the one place in sport where the conditions are identical for everyone standing in it.</p>
+    </div>
+  </section>
+
+  <!-- ============================ ATHLETES ============================ -->
+  <section class="athletes" id="athletes" data-node-id="48:1110" aria-labelledby="athletes-title">
+    <div class="shell">
+      <div class="scatter scatter--athletes">
+        <h2 class="athletes__title" id="athletes-title" data-node-id="48:1111">Athletes</h2>
+
+        <figure class="athlete" style="--l:355;--t:0;--w:335;--h:335" data-node-id="48:1124">
+          <a class="athlete__link" href="athlete.html">
+            <div class="athlete__img"><img src="assets/athletes/eliud-kipchoge-1.jpg" alt="Eliud Kipchoge running with a pace group" loading="lazy"></div>
+            <figcaption class="label">Eliud Kipchoge</figcaption>
+          </a>
+        </figure>
+
+        <figure class="athlete" style="--l:1065;--t:0;--w:335;--h:273" data-node-id="48:1115">
+          <a class="athlete__link" href="athlete.html">
+            <div class="athlete__img"><img src="assets/athletes/wilma-rudolph.jpg" alt="Wilma Rudolph on the track" loading="lazy"></div>
+            <figcaption class="label">Wilma Rudolph</figcaption>
+          </a>
+        </figure>
+
+        <figure class="athlete" style="--l:0;--t:381;--w:335;--h:282" data-node-id="48:1118">
+          <a class="athlete__link" href="athlete.html">
+            <div class="athlete__img"><img src="assets/athletes/kathrine-switzer.jpg" alt="Kathrine Switzer wearing bib 261" loading="lazy"></div>
+            <figcaption class="label">Kathrine Switzer</figcaption>
+          </a>
+        </figure>
+
+        <figure class="athlete" style="--l:1065;--t:384;--w:335;--h:270" data-node-id="48:1112">
+          <a class="athlete__link" href="athlete.html">
+            <div class="athlete__img"><img src="assets/athletes/usain-bolt.jpg" alt="Usain Bolt setting up in the blocks" loading="lazy"></div>
+            <figcaption class="label">Usain Bolt</figcaption>
+          </a>
+        </figure>
+
+        <figure class="athlete" style="--l:355;--t:712;--w:335;--h:279" data-node-id="48:1121">
+          <a class="athlete__link" href="athlete.html">
+            <div class="athlete__img"><img src="assets/athletes/eliud-kipchoge-2.jpg" alt="Eliud Kipchoge crossing the line" loading="lazy"></div>
+            <figcaption class="label">Eliud Kipchoge</figcaption>
+          </a>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CTA ============================ -->
+  <section class="cta" id="cta" data-node-id="48:1150" aria-labelledby="cta-title">
+    <img class="cta__bg" src="assets/img/cta-background.jpg" alt="" loading="lazy">
+    <div class="cta__inner">
+      <h2 class="cta__title" id="cta-title" data-node-id="48:1155">Everyone deserves a lane</h2>
+
+      <div class="cta__side">
+        <div class="cta__block" data-node-id="48:1152">
+          <p class="label">Impact</p>
+          <p class="body">Four percent of every sale goes into building, resurfacing, and equipping running tracks in places that do not have one. Not profit. Revenue. It comes out before anything else does.</p>
+        </div>
+
+        <div class="cta__block" data-node-id="48:1156">
+          <p class="label">Figures</p>
+          <ul class="body cta__figures">
+            <li>14 tracks resurfaced</li>
+            <li>3 tracks built from bare ground</li>
+            <li>9,400 young runners with access</li>
+            <li>$612,000 committed since launch</li>
+          </ul>
+        </div>
+
+        <a class="btn" href="#collection" data-node-id="48:1159">The Lane Shop</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ COLLECTION ============================ -->
+  <section class="collection" id="collection" data-node-id="48:1161" aria-labelledby="collection-title">
+    <div class="shell">
+
+      <div class="collection__head" data-node-id="48:1162">
+        <h2 class="collection__title" id="collection-title" data-node-id="48:1163"><span data-typewriter>The Collection</span><span class="caret" aria-hidden="true"></span></h2>
+        <div class="collection__details" data-node-id="48:1164">
+          <p class="collection__lede" data-node-id="48:1165">Twelve products. Built for the distance, not the photograph.</p>
+          <div class="body" data-node-id="48:1166">
+            <p>We did not want a catalogue. We wanted a small number of things that survive a season of real use. Twelve products, in three groups: Race, Train, Gear. Every one of them run in for eleven months before release.</p>
+            <p>Every weight below is measured, not estimated. If we cannot reduce a number honestly, we print the higher one.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="scatter scatter--products" data-node-id="48:1167">
+
+        <article class="product" data-cursor="See More" style="--l:0;--t:0;--w:513;--h:468" data-node-id="48:1169">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/lane-singlet.jpg" alt="Lane Singlet" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/lane-singlet-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Lane Singlet</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>92g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:1007;--t:27;--w:393;--h:312" data-node-id="48:1247">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/1500-bra.jpg" alt="1500 Bra" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/1500-bra-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>1500 Bra</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>64g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:615;--t:206;--w:335;--h:258" data-node-id="48:1239">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/1-22-short.jpg" alt="1.22 Short" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/1-22-short-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>1.22 Short</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>78g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:0;--t:655;--w:306;--h:247" data-node-id="48:1177">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/split-sock.jpg" alt="Split Sock" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/split-sock-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Split Sock</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>21g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:417;--t:730;--w:317;--h:352" data-node-id="48:1185">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/season-short.jpg" alt="Season Short" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/season-short-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Season Short</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>102g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:888;--t:730;--w:512;--h:434" data-node-id="48:1193">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/sightline.jpg" alt="Sightline" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/sightline-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Sightline</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>26g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:493;--t:1412;--w:306;--h:395" data-node-id="48:1223">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/lane-cap.jpg" alt="Lane Cap" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/lane-cap-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Lane Cap</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>54g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:0;--t:1491;--w:306;--h:240" data-node-id="48:1231">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/dawn-half-zip.jpg" alt="Dawn Half-Zip" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/dawn-half-zip-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Dawn Half-Zip</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>196g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:1005;--t:1611;--w:328;--h:340" data-node-id="48:1201">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/the-straight.jpg" alt="The Straight" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/the-straight-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>The Straight</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>88g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:0;--t:2069;--w:689;--h:522" data-node-id="48:1209">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/escarpment-shell.jpg" alt="Escarpment Shell" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/escarpment-shell-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Escarpment Shell</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>196g</span></div>
+          </div>
+        </article>
+
+        <article class="product" data-cursor="See More" style="--l:1065;--t:2340;--w:335;--h:279" data-node-id="48:1168">
+          <a class="product__media" href="#collection">
+            <img class="product__img" src="assets/products/heat-tee.jpg" alt="Heat Tee" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/heat-tee-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          </a>
+          <div class="product__info">
+            <div class="product__row"><span>Heat Tee</span><span class="product__price">$49.99</span></div>
+            <div class="product__row product__row--stats"><span>88g</span></div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="footer" data-node-id="48:1127">
+  <div class="shell">
+    <hr class="rule" data-node-id="48:1129">
+
+    <div class="footer__top">
+      <p class="footer__claim" data-node-id="48:1131">Twelve products. Built for distance.</p>
+      <p class="footer__year" data-node-id="48:1132">&copy;26</p>
+    </div>
+
+    <p class="footer__detail body" data-node-id="48:1133">Created by the soni labs studio, this signature collection is to celebrate and brings inspiration and innovation to every athlete in the world.</p>
+
+    <hr class="rule rule--thin" data-node-id="48:1130">
+
+    <div class="footer__info" data-node-id="48:1134">
+      <div class="footer__col footer__col--brand" data-node-id="48:1135">
+        <img class="footer__mark" src="assets/svg/logo-mark-footer.svg" alt="">
+        <p class="body">All rights reserved &copy; 2026</p>
+      </div>
+
+      <address class="footer__col body" data-node-id="48:1139">
+        <span>Lagos, Nigeria</span>
+        <span>Worldwide</span>
+        <span>Remote</span>
+      </address>
+
+      <ul class="footer__col body footer__social" data-node-id="48:1143">
+        <li><a href="#top">Instagram</a></li>
+        <li><a href="#top">LinkedIn</a></li>
+        <li><a href="#top">Twitter (X)</a></li>
+      </ul>
+
+      <a class="footer__talk" href="#top" data-node-id="48:1147">
+        <span>Lets Talk</span>
+        <img src="assets/svg/arrow.svg" alt="">
+      </a>
+    </div>
+
+    <div class="footer__wordmark" data-node-id="48:1128" aria-hidden="true">
+      <img src="assets/svg/athletes-wordmark.svg" alt="">
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/gsap.min.js"></script>
+<script src="assets/js/SplitText.min.js"></script>
+<script src="assets/js/ScrollTrigger.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
