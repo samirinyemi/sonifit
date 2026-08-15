@@ -71,6 +71,10 @@ pinned to its Figma px width and only its *position* scales:
 | Footer detail | `335px` |
 | Athlete lede / note | `336px` / `279px` |
 
+The nav logo mark is fixed at `29px` for the same reason — it is a brand asset,
+not layout, so it holds its Figma size instead of growing with the frame. (The
+footer mark still scales; say the word if it should match.)
+
 | Viewport | Behaviour |
 | --- | --- |
 | **≥ 1280px** | Full-bleed scaled composition. Section tops and heights stay in exact Figma proportion. Hero height is capped at `100svh` so the wordmark and its intro always land on the first screen. |
