@@ -314,6 +314,11 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
    never left blank if the scripts fail to load */
 .js-anim .wordmark__letter { opacity: 0; }
 .js-anim [data-anim] { opacity: 0; }
+
+/* The outline copy is static while the solid copy animates in, which would
+   show the two offset from each other. Hold it until the intro finishes —
+   removing .js-anim reveals it, no JS involved. */
+.js-anim .ath__title--outline { opacity: 0; }
 .js-anim .hero .rule { transform: scaleX(0); transform-origin: 0 50%; }
 
 /* ============================== ABOUT =================================== */
