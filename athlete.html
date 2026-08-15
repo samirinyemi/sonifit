@@ -5,20 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Eliud Kipchoge — SONIFIT</title>
 <meta name="description" content="Kipchoge is the most decorated marathon runner in history and the only person to have covered the distance under two hours.">
-<meta name="theme-color" content="#0e0a0a">
+<meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 <script>
-  /* Both run before first paint: the stored theme so light mode never flashes
-     dark, and the animation flag so the hero never flashes its finished state. */
-  (function () {
-    var stored = null;
-    try { stored = localStorage.getItem('sonifit-theme'); } catch (e) {}
-    if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.documentElement.classList.add('js-anim');
-    }
-  })();
+  /* set before first paint so the hero never flashes its finished state */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('js-anim');
+  }
 </script>
 </head>
 <body class="page-athlete">
@@ -34,11 +28,6 @@
     <ul class="nav__links">
       <li data-anim><a href="index.html#cta">IMPACT</a></li>
       <li data-anim><a href="index.html#athletes">ATHLETES</a></li>
-      <li class="nav__switch" data-anim>
-        <button class="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Dark mode">
-          <span class="theme-toggle__knob"></span>
-        </button>
-      </li>
     </ul>
   </nav>
 </div>
@@ -154,6 +143,6 @@
 
 <script src="assets/js/gsap.min.js"></script>
 <script src="assets/js/SplitText.min.js"></script>
-<script src="script.js?v=3"></script>
+<script src="script.js?v=4"></script>
 </body>
 </html>

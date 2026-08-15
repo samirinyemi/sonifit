@@ -22,27 +22,13 @@
 /* ------------------------------ tokens ---------------------------------- */
 
 :root {
-  color-scheme: dark;
-
-  /* colour — dark theme. The page ground is a near-black carrying the same
-     red cast the old cream had (#FFF5F5 was white tinted red; #0E0A0A is
-     black tinted red), so the palette still reads as one family.
-     #FF2D2D on #0E0A0A measures 5.30:1 — comfortably past WCAG AA for
-     body text, where the light theme only reached 3.43:1. */
-  --red: #ff2d2d;
-  --bg: #0e0a0a;   /* page ground — deliberately not pure black */
-  --white: #ffffff;
-  --ink: #060605;     /* the darker ground behind hero video and CTA photo */
-}
-
-/* Light theme. Only the page ground changes — the type stays red and --ink
-   stays dark, because the hero and CTA grounds sit behind photography in
-   both themes. Note the trade: #FF2D2D on #FFF5F5 is 3.43:1, which fails
-   WCAG AA for the 13px labels and 15px copy. Dark is the accessible default,
-   which is why it is what `:root` carries. */
-:root[data-theme="light"] {
   color-scheme: light;
-  --bg: #fff5f5;
+
+  /* colour */
+  --red: #ff2d2d;
+  --bg: #fff5f5;      /* page ground */
+  --white: #ffffff;
+  --ink: #060605;     /* the dark ground behind hero video and CTA photo */
 
   /* layout */
   --frame: 1440;
@@ -270,39 +256,6 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   transition: opacity 0.25s var(--ease);
 }
 .nav__links a:hover { opacity: 0.6; }
-
-/* --- theme switch --- */
-
-.nav__links li { display: flex; align-items: center; }
-
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  width: calc(30 * var(--u));
-  min-width: 30px;
-  height: calc(16 * var(--u));
-  min-height: 16px;
-  padding: 2px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  transition: opacity 0.25s var(--ease);
-}
-.theme-toggle:hover { opacity: 0.6; }
-
-.theme-toggle__knob {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: currentColor;
-  /* knob right = dark, knob left = light */
-  transform: translateX(calc(100% + 2px));
-  transition: transform 0.28s var(--ease);
-}
-
-:root[data-theme="light"] .theme-toggle__knob { transform: translateX(0); }
 
 /* --- hero foot --- */
 
@@ -1106,11 +1059,8 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   }
 
   /* The nav fits on one line at 12px even at 320px wide, so it stays a single
-     row rather than wrapping and eating 36px of the hero. The centred mark is
-     dropped: with the switch added, the links block reaches the middle column
-     and collides with it, and "MADE BY SONI" already carries the identity. */
-  .nav__mark { display: none; }
-  .nav { grid-template-columns: auto auto; column-gap: 16px; justify-content: space-between; }
+     row rather than wrapping and eating 36px of the hero. */
+  .nav { column-gap: 16px; }
   .nav__brand { white-space: nowrap; }
   .nav__links { gap: 16px; }
 

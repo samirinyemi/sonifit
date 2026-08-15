@@ -28,34 +28,11 @@ Then open <http://localhost:5173>.
 | Token | Value | Role |
 | --- | --- | --- |
 | `--red` | `#FF2D2D` | all type, rules, the cursor, the wordmark |
-| `--bg` | `#0E0A0A` | page ground — near-black, not pure black |
-| `--ink` | `#060605` | the darker ground behind the hero video and CTA photo |
+| `--bg` | `#FFF5F5` | page ground |
+| `--ink` | `#060605` | the dark ground behind the hero video and CTA photo |
 | `--white` | `#FFFFFF` | only ever on red: the CTA button, the cursor label |
 
-`--bg` carries the same red cast the original cream did — `#FFF5F5` was white
-tinted red, `#0E0A0A` is black tinted red — so the two-colour palette still
-reads as one family. `color-scheme: dark` is set on `:root`, so scrollbars and
-any UA chrome follow, and both pages ship a matching `theme-color`.
-
-### Theme switch
-
-A pill switch sits at the end of the nav on both pages. Dark is the default;
-light is `:root[data-theme="light"]`, which overrides `--bg` alone — the type
-stays red and `--ink` stays dark, because the hero and CTA grounds sit behind
-photography either way.
-
-- The choice persists in `localStorage` under `sonifit-theme` and is applied by
-  an inline script in `<head>`, before first paint, so light mode never flashes
-  dark on load.
-- It is wired ahead of the GSAP checks in `script.js`, so it works with
-  animations disabled or GSAP missing — the theme is functionality, not
-  decoration.
-- `role="switch"` with `aria-checked`, and the `theme-color` meta updates with it.
-- **Light mode reintroduces the contrast problem**: `#FF2D2D` on `#FFF5F5` is
-  3.43:1, which fails WCAG AA for the 13px labels and 15px copy. That is why
-  dark is the default rather than an alternate.
-
-Changing either theme is a one-line edit: `--bg` in the relevant block.
+Two colours, as designed. Changing the ground is a one-line edit: `--bg`.
 
 ## How the responsive model works
 
@@ -109,10 +86,9 @@ it breaks the gutters and runs edge to edge, and everything above it tightens
 so the type block reads as a deliberate base rather than a strip stranded under
 a void.
 
-Also at that width: the nav stays one row (it fits at 12px even at 320px) and
-drops the centred mark, which the theme switch would otherwise collide with —
-"MADE BY SONI" already carries the identity. The meta becomes two rows, with
-"© 2026" pinned to the right edge instead of crammed against the CTA.
+Also at that width: the nav stays one row rather than wrapping (it fits at 12px
+even at 320px), and the meta becomes two rows, with "© 2026" pinned to the right
+edge instead of crammed against the CTA.
 
 ### Cache busting
 
@@ -215,10 +191,10 @@ content for the rest, the page wants to become data-driven (one JSON map, one
   up with no other change.
 - **Product hover.** The `_Hover` files shipped in `Collection images` are wired
   up as a crossfade on hover/focus.
-- **Contrast.** `#FF2D2D` on `#0E0A0A` measures **5.30:1** — past WCAG AA for
-  body text at any size. The original light ground (`#FFF5F5`) only reached
-  3.43:1, which failed AA for the 13px labels and 15px copy, so the dark theme
-  fixed an accessibility problem as a side effect.
+- **Contrast.** `#FF2D2D` on `#FFF5F5` measures **3.43:1**. That passes for large
+  type but is under the 4.5:1 WCAG AA threshold for the 13px labels and 15px body
+  copy. Left as designed — worth a decision before this goes anywhere real. A
+  darker ground fixes it (`#0E0A0A` measures 5.30:1) if the design ever allows it.
 - **Assets** were downscaled and re-encoded (163MB → 7MB). The 4K hero showreel
   is now 1080p at 2.5MB with a poster frame; originals remain untouched in the
   parent folder.
