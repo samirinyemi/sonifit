@@ -26,6 +26,43 @@
     resizeTimer = window.setTimeout(setScrollbarWidth, 120);
   });
 
+  /* ----------------------------------------------------------------- theme */
+
+  // Dark is the default; the stored choice is applied by the inline script in
+  // <head> so light mode never flashes dark. This only wires the switch, and
+  // runs before the GSAP checks below — the theme is functionality, not
+  // decoration, so it must work with animations off or GSAP missing.
+  (function themeSwitch() {
+    var KEY = 'sonifit-theme';
+    var toggle = document.querySelector('.theme-toggle');
+    if (!toggle) return;
+
+    var meta = document.querySelector('meta[name="theme-color"]');
+
+    function apply(theme, persist) {
+      var light = theme === 'light';
+
+      if (light) root.setAttribute('data-theme', 'light');
+      else root.removeAttribute('data-theme');
+
+      toggle.setAttribute('aria-checked', light ? 'false' : 'true');
+      toggle.setAttribute('aria-label', light ? 'Light mode' : 'Dark mode');
+
+      if (meta) meta.setAttribute('content', light ? '#fff5f5' : '#0e0a0a');
+
+      if (persist) {
+        try { localStorage.setItem(KEY, theme); } catch (e) { /* private mode */ }
+      }
+    }
+
+    // Sync the control with whatever the head script already decided.
+    apply(root.getAttribute('data-theme') === 'light' ? 'light' : 'dark', false);
+
+    toggle.addEventListener('click', function () {
+      apply(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light', true);
+    });
+  })();
+
   /* ----------------------------------------------------------------- video */
 
   var video = document.querySelector('.hero__video');

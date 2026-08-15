@@ -37,7 +37,25 @@ tinted red, `#0E0A0A` is black tinted red — so the two-colour palette still
 reads as one family. `color-scheme: dark` is set on `:root`, so scrollbars and
 any UA chrome follow, and both pages ship a matching `theme-color`.
 
-Changing the whole theme is a two-line edit: `--bg` and `--ink`.
+### Theme switch
+
+A pill switch sits at the end of the nav on both pages. Dark is the default;
+light is `:root[data-theme="light"]`, which overrides `--bg` alone — the type
+stays red and `--ink` stays dark, because the hero and CTA grounds sit behind
+photography either way.
+
+- The choice persists in `localStorage` under `sonifit-theme` and is applied by
+  an inline script in `<head>`, before first paint, so light mode never flashes
+  dark on load.
+- It is wired ahead of the GSAP checks in `script.js`, so it works with
+  animations disabled or GSAP missing — the theme is functionality, not
+  decoration.
+- `role="switch"` with `aria-checked`, and the `theme-color` meta updates with it.
+- **Light mode reintroduces the contrast problem**: `#FF2D2D` on `#FFF5F5` is
+  3.43:1, which fails WCAG AA for the 13px labels and 15px copy. That is why
+  dark is the default rather than an alternate.
+
+Changing either theme is a one-line edit: `--bg` in the relevant block.
 
 ## How the responsive model works
 
@@ -80,7 +98,27 @@ pinned to its Figma px width and only its *position* scales:
 | --- | --- |
 | **≥ 1280px** | Full-bleed scaled composition. Section tops and heights stay in exact Figma proportion. Hero height is capped at `100svh` so the wordmark and its intro always land on the first screen. |
 | **≤ 1279px** | Scaling stops (`--u: 1px`). The two scattered canvases (Athletes, Collection) reflow into a packed two-column layout via CSS multi-column, and the hero fills the viewport. |
-| **≤ 560px** | Single column throughout. |
+| **≤ 560px** | Single column throughout, plus a portrait rebalance of the hero. |
+
+### The hero on phones
+
+The wordmark is a fixed 5.28:1 lockup, so on a narrow screen it can never be
+proportionally as large as it is in Figma (25% of the hero height there, ~9%
+at 375px). The most it can be is the full width of the screen, so below 560px
+it breaks the gutters and runs edge to edge, and everything above it tightens
+so the type block reads as a deliberate base rather than a strip stranded under
+a void.
+
+Also at that width: the nav stays one row (it fits at 12px even at 320px) and
+drops the centred mark, which the theme switch would otherwise collide with —
+"MADE BY SONI" already carries the identity. The meta becomes two rows, with
+"© 2026" pinned to the right edge instead of crammed against the CTA.
+
+### Cache busting
+
+`styles.css` and `script.js` are linked with a `?v=` query. Vercel caches static
+assets hard, so **bump that number in both HTML files whenever you change either
+file**, or returning visitors keep the old one.
 
 The scattered sections use `--l / --t / --w / --h` inline custom properties
 holding the raw Figma coordinates — so a position change in Figma is a one-number

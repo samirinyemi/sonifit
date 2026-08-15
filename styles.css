@@ -33,6 +33,16 @@
   --bg: #0e0a0a;   /* page ground — deliberately not pure black */
   --white: #ffffff;
   --ink: #060605;     /* the darker ground behind hero video and CTA photo */
+}
+
+/* Light theme. Only the page ground changes — the type stays red and --ink
+   stays dark, because the hero and CTA grounds sit behind photography in
+   both themes. Note the trade: #FF2D2D on #FFF5F5 is 3.43:1, which fails
+   WCAG AA for the 13px labels and 15px copy. Dark is the accessible default,
+   which is why it is what `:root` carries. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fff5f5;
 
   /* layout */
   --frame: 1440;
@@ -260,6 +270,39 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   transition: opacity 0.25s var(--ease);
 }
 .nav__links a:hover { opacity: 0.6; }
+
+/* --- theme switch --- */
+
+.nav__links li { display: flex; align-items: center; }
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  width: calc(30 * var(--u));
+  min-width: 30px;
+  height: calc(16 * var(--u));
+  min-height: 16px;
+  padding: 2px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.25s var(--ease);
+}
+.theme-toggle:hover { opacity: 0.6; }
+
+.theme-toggle__knob {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  /* knob right = dark, knob left = light */
+  transform: translateX(calc(100% + 2px));
+  transition: transform 0.28s var(--ease);
+}
+
+:root[data-theme="light"] .theme-toggle__knob { transform: translateX(0); }
 
 /* --- hero foot --- */
 
@@ -1062,11 +1105,42 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
     --fs-product: 17px;
   }
 
-  .nav { grid-template-columns: auto 1fr; row-gap: 12px; }
-  .nav__mark { grid-column: 2; justify-self: end; }
-  .nav__links { grid-column: 1 / -1; justify-content: flex-start; gap: 20px; }
+  /* The nav fits on one line at 12px even at 320px wide, so it stays a single
+     row rather than wrapping and eating 36px of the hero. The centred mark is
+     dropped: with the switch added, the links block reaches the middle column
+     and collides with it, and "MADE BY SONI" already carries the identity. */
+  .nav__mark { display: none; }
+  .nav { grid-template-columns: auto auto; column-gap: 16px; justify-content: space-between; }
+  .nav__brand { white-space: nowrap; }
+  .nav__links { gap: 16px; }
 
-  .hero__meta--d { margin-left: 0; }
+  /* Portrait rebalance. The wordmark is a fixed 5.28:1 lockup, so the only
+     way to give it presence on a narrow screen is to run it edge to edge —
+     that is its maximum. Everything above it tightens so the type block
+     reads as a deliberate base rather than a strip stranded under a void. */
+  .hero__inner { padding-block: 20px 12px; gap: 24px; }
+
+  .hero__wordmark {
+    width: calc(100% + (2 * var(--gutter)));
+    margin-left: calc(-1 * var(--gutter));
+    margin-top: 10px;
+  }
+
+  .hero__blurb { margin-bottom: 0; }
+
+  .hero__meta {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 12px;
+    margin-top: 16px;
+  }
+
+  .hero__meta > * { grid-row: auto; }
+  .hero__meta--a { grid-column: 1 / -1; }
+  .hero__meta--c { grid-column: 1; justify-self: start; }
+  .hero__meta--d { grid-column: 2; justify-self: end; margin-left: 0; }
+
+  .hero .rule { margin-top: 10px; }
 
   .scatter--athletes { columns: 1; }
   .scatter--athletes > .athlete { margin-bottom: 36px; }
