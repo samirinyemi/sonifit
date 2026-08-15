@@ -23,6 +23,22 @@ Then open <http://localhost:5173>.
 | `assets/js/` | GSAP 3.13 + SplitText, self-hosted. No CDN at runtime. |
 | `assets/` | Video, images, SVG exports. |
 
+## Palette
+
+| Token | Value | Role |
+| --- | --- | --- |
+| `--red` | `#FF2D2D` | all type, rules, the cursor, the wordmark |
+| `--bg` | `#0E0A0A` | page ground — near-black, not pure black |
+| `--ink` | `#060605` | the darker ground behind the hero video and CTA photo |
+| `--white` | `#FFFFFF` | only ever on red: the CTA button, the cursor label |
+
+`--bg` carries the same red cast the original cream did — `#FFF5F5` was white
+tinted red, `#0E0A0A` is black tinted red — so the two-colour palette still
+reads as one family. `color-scheme: dark` is set on `:root`, so scrollbars and
+any UA chrome follow, and both pages ship a matching `theme-color`.
+
+Changing the whole theme is a two-line edit: `--bg` and `--ink`.
+
 ## How the responsive model works
 
 The Figma frame is **1440 wide with a 1400 content column and 20px gutters**.
@@ -161,9 +177,10 @@ content for the rest, the page wants to become data-driven (one JSON map, one
   up with no other change.
 - **Product hover.** The `_Hover` files shipped in `Collection images` are wired
   up as a crossfade on hover/focus.
-- **Contrast.** `#FF2D2D` on `#FFF5F5` measures **3.43:1**. That passes for large
-  type but is under the 4.5:1 WCAG AA threshold for the 13px labels and 15px body
-  copy. Left as designed — worth a decision before launch.
+- **Contrast.** `#FF2D2D` on `#0E0A0A` measures **5.30:1** — past WCAG AA for
+  body text at any size. The original light ground (`#FFF5F5`) only reached
+  3.43:1, which failed AA for the 13px labels and 15px copy, so the dark theme
+  fixed an accessibility problem as a side effect.
 - **Assets** were downscaled and re-encoded (163MB → 7MB). The 4K hero showreel
   is now 1080p at 2.5MB with a poster frame; originals remain untouched in the
   parent folder.

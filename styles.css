@@ -22,11 +22,17 @@
 /* ------------------------------ tokens ---------------------------------- */
 
 :root {
-  /* colour */
+  color-scheme: dark;
+
+  /* colour — dark theme. The page ground is a near-black carrying the same
+     red cast the old cream had (#FFF5F5 was white tinted red; #0E0A0A is
+     black tinted red), so the palette still reads as one family.
+     #FF2D2D on #0E0A0A measures 5.30:1 — comfortably past WCAG AA for
+     body text, where the light theme only reached 3.43:1. */
   --red: #ff2d2d;
-  --cream: #fff5f5;
+  --bg: #0e0a0a;   /* page ground — deliberately not pure black */
   --white: #ffffff;
-  --ink: #060605;
+  --ink: #060605;     /* the darker ground behind hero video and CTA photo */
 
   /* layout */
   --frame: 1440;
@@ -74,7 +80,7 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--cream);
+  background: var(--bg);
   color: var(--red);
   font-family: var(--font);
   font-weight: var(--w-medium);
@@ -89,6 +95,12 @@ h1, h2, h3, p, figure, ul, address {
   margin: 0;
   padding: 0;
   font-style: normal;
+}
+
+/* the browser default selection is a blue that has no business here */
+::selection {
+  background: var(--red);
+  color: var(--bg);
 }
 
 ul { list-style: none; }
