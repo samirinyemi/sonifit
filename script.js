@@ -23,7 +23,16 @@
   var resizeTimer;
   window.addEventListener('resize', function () {
     window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(setScrollbarWidth, 120);
+    resizeTimer = window.setTimeout(function () {
+      setScrollbarWidth();
+      // ScrollTrigger refreshes on resize too, but it does so in the frame the
+      // document height changed — before the browser has clamped scroll to the
+      // new maximum. Measuring again once things have settled is what keeps
+      // every start/end positive. The retry budget resets here: a resize is a
+      // new situation, not a continuation of the last one.
+      remeasures = 0;
+      scheduleRemeasure();
+    }, 120);
   });
 
   /* ----------------------------------------------------------------- video */
@@ -499,12 +508,46 @@
       endTrigger: opts.endTrigger,
       end: opts.end,
       invalidateOnRefresh: true,
-      onUpdate: function (self) {
-        gsap.set(el, { y: (self.end - self.start) * self.progress });
-      },
-      onRefresh: function (self) {
-        gsap.set(el, { y: (self.end - self.start) * self.progress });
+      onUpdate: apply,
+      onRefresh: apply
+    });
+
+    // A refresh that runs while the browser has not yet clamped the scroll
+    // position — the frame after a resize shortens the document — measures
+    // every position short by the overshoot, and `start` comes back negative.
+    // Progress then reads as 1 before you have scrolled at all, and the title
+    // is written a full section-height down: off screen, permanently, with
+    // nothing left to trigger a correction.
+    //
+    // So an impossible measurement is not used. The element keeps its natural
+    // position (the design's own baseline, always readable) and one more
+    // refresh is asked for once the browser has settled.
+    function apply(self) {
+      if (self.start < 0 || self.end <= self.start) {
+        gsap.set(el, { y: 0 });
+        scheduleRemeasure();
+        return;
       }
+      gsap.set(el, { y: (self.end - self.start) * self.progress });
+    }
+  }
+
+  // Two frames, so the read happens after the browser has clamped scroll to
+  // the new document height rather than in the same frame that changed it.
+  var remeasureQueued = false;
+  var remeasures = 0;
+
+  function scheduleRemeasure() {
+    if (remeasureQueued || typeof window.ScrollTrigger === 'undefined') return;
+    // A refresh triggers `apply`, which can ask for another one. Capped so a
+    // measurement that is somehow negative for good cannot spin the page.
+    if (remeasures++ > 8) return;
+    remeasureQueued = true;
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        remeasureQueued = false;
+        window.ScrollTrigger.refresh();
+      });
     });
   }
 
@@ -653,12 +696,11 @@
 
     gsap.registerPlugin(window.ScrollTrigger);
 
-    revealMedia(cards);
+    // The five portraits reveal through buildReveals, with an explicit stagger
+    // — they sit on one row, so geometry alone cannot separate them.
 
     // Only above the reflow breakpoint. Below it the scatter becomes a column
     // and the title sits in normal flow, where pinning would read as a glitch.
-    if (!title || typeof gsap.matchMedia !== 'function') return;
-
     if (!title || typeof gsap.matchMedia !== 'function') return;
 
     gsap.matchMedia().add('(min-width: 1280px)', function () {
@@ -781,6 +823,85 @@
     }
   }
 
+  /* ---------------------------------------------------------- scroll reveal */
+
+  // One reveal, reused for every block that has no motion of its own.
+  //
+  // IntersectionObserver rather than ScrollTrigger on purpose: there is no
+  // measured start/end to go stale, nothing to refresh, and a relayout cannot
+  // knock it out. It fires once per element and disconnects — a block that
+  // re-hides on the way back up reads as a gimmick and makes the page feel
+  // unstable.
+  //
+  // The whole thing is additive. `.reveal` on its own is the finished state;
+  // only the no-preference query in the stylesheet ever writes `opacity: 0`.
+  // So reduced motion, a missing observer, or no JS at all leaves a plain
+  // static page — nothing is hidden from a crawler or a screen reader, and
+  // nothing waits on a script to become readable.
+  function revealOnScroll(els, delayFor) {
+    if (!els || !els.length) return;
+    if (typeof window.IntersectionObserver === 'undefined') return;
+
+    els.filter(Boolean).forEach(function (el, i) {
+      el.classList.add('reveal');
+
+      // Already on screen when the page settles. Marking it shown straight
+      // away skips the hidden state, so nothing flashes out and back in.
+      var box = el.getBoundingClientRect();
+      if (box.top < window.innerHeight && box.bottom > 0) {
+        el.setAttribute('data-shown', 'true');
+        return;
+      }
+
+      // The delay is a custom property read by the transition, not a timer.
+      // A stagger built from setTimeout costs a callback per element and
+      // drifts out of sync with the transition it is supposed to lead.
+      var delay = typeof delayFor === 'function' ? delayFor(el, i) : (delayFor || 0);
+      if (delay) el.style.setProperty('--reveal-delay', delay + 'ms');
+      el.setAttribute('data-shown', 'false');
+
+      // -12% at the bottom: the element has to travel a little way up into the
+      // viewport before it fires, so blocks arrive once you have committed to
+      // scrolling to them rather than the instant their first pixel appears.
+      var io = new window.IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        el.setAttribute('data-shown', 'true');
+        io.disconnect();
+      }, { threshold: 0.01, rootMargin: '0px 0px -12% 0px' });
+
+      io.observe(el);
+    });
+  }
+
+  function buildReveals() {
+    // 1. Cards hand-placed at scattered vertical positions. Own observer, no
+    //    delay: they sit at different heights, so the viewport edge reaches
+    //    them at different moments and they arrive in reading order straight
+    //    out of the geometry. Scroll slowly and they trickle in; scroll fast
+    //    and they come as a wave. An index stagger here would fight the
+    //    layout and fire cards that are still off screen.
+    revealOnScroll(q('.scatter--products > .product'), 0);
+
+    // 2. Portraits on one horizontal row. Geometry cannot separate these, so
+    //    the stagger has to be explicit. 70ms a step — past about 100 and the
+    //    last one feels late.
+    revealOnScroll(q('.athletes .athlete'), function (el, i) { return i * 70; });
+
+    // 3. Stacked text, hand-tuned so each block resolves top to bottom and the
+    //    whole thing is done inside 200ms. One composition arriving, not five
+    //    separate events.
+    [
+      ['.footer__top', 0],
+      ['.footer__detail', 90],
+      ['.footer__info', 140],
+      ['.footer__talk', 200],
+      ['.footer__wordmark', 200],
+      ['.ath-statement', 0]
+    ].forEach(function (pair) {
+      revealOnScroll(q(pair[0]), pair[1]);
+    });
+  }
+
   function buildCopyReveals() {
     var cta = document.querySelector('.cta');
     if (cta) {
@@ -797,8 +918,8 @@
       { start: 'top 80%' }
     );
 
-    // The eleven product cards, same rule as every other photograph.
-    revealMedia(q('.scatter--products .product'));
+    // The eleven product cards are handled by buildReveals — one system for
+    // every card in a grid, so they cannot end up on two different clocks.
   }
 
   // The full-bleed plate opens from a small centred rectangle to full width as
@@ -863,6 +984,9 @@
     try {
       buildCopyReveals();
     } catch (e) { /* copy stays visible, which is the end state */ }
+    try {
+      buildReveals();
+    } catch (e) { /* every block is already in its finished state */ }
   }
 
   // The load sequence runs first and the hero intro starts the moment it is

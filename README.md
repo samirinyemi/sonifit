@@ -172,6 +172,42 @@ All of it is ScrollTrigger. Two kinds, used deliberately:
 | Collage photographs (athlete page) | Drift at five different rates as the section passes |
 | The full-bleed plate | Opens from a small centred rectangle (`clip-path: inset(16% 24%)`) to full bleed, with the image easing from 1.18 to 1 |
 
+**Revealed** — the general case, and the only one that is not ScrollTrigger.
+
+Every block with no motion of its own gets `.reveal`: opacity 0 and an 18px
+lift, resolving on an IntersectionObserver at `threshold 0.01` and
+`rootMargin: 0px 0px -12% 0px`. The negative bottom margin means an element
+has to travel a little way up into the viewport before it fires, so blocks
+arrive once you have committed to scrolling to them rather than the instant
+their first pixel appears. Each fires once and disconnects — re-hiding on the
+way back up reads as a gimmick and makes the page feel unstable.
+
+Opacity runs 720ms, the transform 900ms, both on `cubic-bezier(0.22, 0.61,
+0.36, 1)`. The transform outlasting the fade by 180ms is the point: the block
+is fully readable while it is still settling its last pixels, so it arrives
+rather than slides. 18px and no more — longer travel turns a page into a
+slideshow and fights the layout.
+
+Three ways of getting the line-by-line feel, and they are not interchangeable:
+
+| Shape | How |
+| --- | --- |
+| Cards at scattered vertical positions (the collection) | Own observer, **no delay**. They sit at different heights, so the viewport edge reaches them at different moments and they arrive in reading order out of the geometry alone. It self-times to scroll speed — trickling when you scroll slowly, arriving as a wave when you scroll fast. An index stagger here would fight the layout and fire cards still off screen |
+| Items on one horizontal row (the five portraits) | Geometry cannot separate them, so stagger explicitly: `index * 70ms` |
+| Stacked text (the footer) | Hand-tuned down the stack — 0, 90, 140, 200 — capped at 200ms total. One composition arriving, not five events |
+
+It is strictly additive. `.reveal` on its own is the finished state; the only
+place `opacity: 0` is ever written is inside `@media (prefers-reduced-motion:
+no-preference)`. Reduced motion, a missing `IntersectionObserver`, or no JS at
+all leaves a plain static page — nothing is hidden from a crawler or a screen
+reader, and nothing waits on a script to become readable. State is a
+`data-shown` attribute and the delay is a `--reveal-delay` custom property
+read by the transition, so there are no inline styles and no `setTimeout`
+stagger drifting out of sync with the transition it leads.
+
+The hero is exempt — it is above the fold and already animating on load — as
+is anything fixed or overlaid (nav, cursor, loader).
+
 **Triggered** — fires once on entry and plays through at its own speed,
 so you never have to keep scrolling to finish what you have started reading.
 
@@ -187,6 +223,17 @@ until the end of its section reaches the middle — the photography keeps
 scrolling past a held title. Same on the athlete page for the name, where
 *both* copies (solid and stroke-only) pin off a single shared trigger, so the
 outline stays registered with the pictures moving behind it.
+
+The hold derives its start from `offsetTop` on the title's `offsetParent`,
+never from the title's own bounding box — the box carries the transform the
+hold itself writes, so measuring it would let the trigger chase its own
+output. It also refuses a measurement it knows is impossible: a refresh that
+lands before the browser has clamped scroll to a newly shortened document
+reports every position short by the overshoot, and `start` comes back
+negative. Progress then reads 1 before you have scrolled at all and the title
+is written a full section-height down — off screen, permanently, with nothing
+left to correct it. In that case the title keeps its natural position and one
+more refresh is requested a frame later, once things have settled.
 
 Pins use `pinSpacing: false` — the titles are absolutely positioned inside
 their scatter canvases, and spacing would push the whole canvas down. Pinning

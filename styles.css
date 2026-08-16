@@ -1249,6 +1249,44 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   .ath__collage { grid-template-columns: 1fr; }
 }
 
+/* ---------------------------- scroll reveal ------------------------------ */
+
+/* Strictly additive. The base state is the finished state — visible, no
+   transform, no transition — so a visitor with no JS, no IntersectionObserver
+   or reduced motion set reads a plain static page. Everything that hides an
+   element lives inside the no-preference query below, which is the only place
+   `opacity: 0` is ever written.
+
+   The state is a data attribute rather than a class so the markup says what it
+   is at a glance, and so all the motion can be keyed off it here: no inline
+   transitions, nothing for the script to do but flip one attribute. */
+.reveal { opacity: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal[data-shown='false'] {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+
+  .reveal {
+    /* The transform outlasts the fade by 180ms on purpose. The block is fully
+       readable while it is still settling its last pixels, so it arrives
+       rather than slides. 18px of lift and no more — travel any longer than
+       this turns a page into a slideshow and fights the layout. */
+    transition:
+      opacity 720ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms),
+      transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  /* Released once it has arrived: a permanent will-change on dozens of blocks
+     is a layer each, for a transition that runs once. */
+  .reveal[data-shown='true'] {
+    transform: none;
+    will-change: auto;
+  }
+}
+
 /* ------------------------------ motion ---------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
