@@ -72,7 +72,33 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; }
+
+/* Native smooth scrolling is the anchor behaviour only when Lenis is not
+   running. Lenis adds `.lenis` to <html> and drives its own scrollTo, and the
+   two fight each other: the browser animates the position while Lenis is also
+   animating it, and anchor jumps stutter or land short. */
+html:not(.lenis) { scroll-behavior: smooth; }
+
+/* Lenis' own stylesheet, inlined rather than a second request. */
+html.lenis,
+html.lenis body { height: auto; }
+
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch],
+.lenis [data-lenis-prevent-vertical],
+.lenis [data-lenis-prevent-horizontal] { overscroll-behavior: contain; }
+
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+.lenis.lenis-autoToggle {
+  transition-property: overflow;
+  transition-duration: 1ms;
+  transition-behavior: allow-discrete;
+}
 
 body {
   margin: 0;

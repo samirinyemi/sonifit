@@ -20,7 +20,7 @@ Then open <http://localhost:5173>.
 | `athlete.html` | Athlete detail page (Figma `42:280`). Linked from every athlete card. |
 | `styles.css` | All styling, tokens and breakpoints. |
 | `script.js` | Scrollbar measurement, hero intro timeline, reduced-motion handling. |
-| `assets/js/` | GSAP 3.13 + SplitText + ScrollTrigger, self-hosted. No CDN at runtime. |
+| `assets/js/` | GSAP 3.13 + SplitText + ScrollTrigger, Lenis 1.3.26, and the slit-scan hover shader. All self-hosted — no CDN at runtime. |
 | `assets/js/slitscan.js` | The WebGL hover crossing on the collection cards. Self-contained, no GSAP. |
 | `tools/crop-products.sh` | Build step: re-cuts every product photograph to its frame's aspect ratio. |
 | `assets/` | Video, images, SVG exports. |
@@ -159,6 +159,44 @@ Robustness:
 
 The athlete page reuses the same timeline — its nav, name and two descriptions
 carry `data-anim` and stagger in together.
+
+## Smooth scrolling
+
+[Lenis](https://github.com/darkroomengineering/lenis) 1.3.26, MIT, self-hosted
+in `assets/js/` like the rest — no CDN at runtime. Its stylesheet is inlined
+into `styles.css` rather than fetched as a second file.
+
+Lenis smooths the wheel but still moves the **real** scroll position — it is
+not a transformed proxy. So `window.scrollY`, the sticky nav, the reveal
+observers, ScrollTrigger and the browser's own scrollbar all keep working off
+the same number they always did, and none of it needs a scroller proxy.
+
+| Setting | Why |
+| --- | --- |
+| `lerp: 0.1` | Lower lerp, longer coast. Much above 0.15 and the smoothing stops reading as deliberate and starts reading as lag |
+| `syncTouch: false` | Touch is left alone. Phones already have momentum scrolling in the OS, and overriding it makes the page feel detached from the finger |
+| `anchors: true` | Lenis owns the in-page anchors, so the nav links and the eleven cards pointing at `#collection` glide instead of jumping |
+| `autoRaf: false` | GSAP's ticker drives the frame instead |
+
+**One clock.** Lenis steps on `gsap.ticker` and ScrollTrigger updates on every
+Lenis scroll event, so the scroll position, the scrubbed triggers and every
+tween are measured against the same frame. Left on two independent `rAF`s they
+drift a frame apart, which shows up on the scrubbed hold as a title jittering
+against the photography behind it. `gsap.ticker.lagSmoothing(0)` goes with it:
+lag smoothing pauses GSAP's clock after a long frame, which would strand Lenis
+mid-glide with no frames left to finish it.
+
+Native `scroll-behavior: smooth` is scoped to `html:not(.lenis)` — the two
+animate the same position and fight, making anchor jumps stutter or land
+short. With JS off, `.lenis` is never added and native smooth anchors are the
+fallback.
+
+Lenis is stopped while the loading overlay is up, so wheel deltas do not pile
+up behind it and release in a lurch when the sheet lifts, and `start()` lands
+the page at the top with `immediate: true` — a 1.5s coast is not something to
+measure ScrollTrigger's starts against. Under `prefers-reduced-motion` Lenis
+is never constructed at all: that code path returns before it is built, so the
+page scrolls natively.
 
 ## Scroll choreography
 

@@ -116,6 +116,8 @@
   // timer fires.
   function closeLoader() {
     root.classList.remove('is-loading');
+    // The overlay held the page still; the wheel is live again from here.
+    if (lenis) lenis.start();
     // Whatever dismissed the overlay — the sequence finishing, a failsafe, no
     // GSAP at all — this is the moment the hero is the visitor's to look at,
     // so the showreel runs from its first frame. Starting twice is a no-op.
@@ -154,6 +156,62 @@
   var q = function (sel, ctx) {
     return Array.prototype.slice.call((ctx || document).querySelectorAll(sel));
   };
+
+  /* ------------------------------------------------------- smooth scrolling */
+
+  // Lenis smooths the wheel, but it still moves the real scroll position —
+  // it is not a transformed proxy. So `window.scrollY`, the sticky nav, the
+  // reveal observers, ScrollTrigger and the browser's own scrollbar all keep
+  // working off the same number they always did, and nothing here needs a
+  // scroller proxy.
+  var lenis = null;
+
+  function buildSmoothScroll() {
+    if (typeof window.Lenis === 'undefined') return;
+
+    lenis = new window.Lenis({
+      // Lower lerp, longer coast. 0.1 is an editorial glide; much above 0.15
+      // and the smoothing stops reading as deliberate and starts reading as
+      // lag.
+      lerp: 0.1,
+      smoothWheel: true,
+      // Touch is left alone. Phones already have momentum scrolling in the OS,
+      // and overriding it makes the page feel detached from the finger.
+      syncTouch: false,
+      // Lenis owns the in-page anchors, so the nav links and the eleven cards
+      // pointing at #collection glide instead of jumping.
+      anchors: true,
+      // GSAP's ticker drives the frame instead — see below.
+      autoRaf: false
+    });
+
+    // One clock for everything. Lenis steps on GSAP's ticker and ScrollTrigger
+    // reads the position on every Lenis frame, so the scroll, the scrubbed
+    // triggers and every tween are all measured against the same frame. Left
+    // on two independent rafs they drift a frame apart, which is visible on a
+    // scrubbed hold as a title that jitters against the photography behind it.
+    if (typeof window.ScrollTrigger !== 'undefined') {
+      lenis.on('scroll', window.ScrollTrigger.update);
+    }
+
+    gsap.ticker.add(function (time) {
+      lenis.raf(time * 1000);   // GSAP counts seconds, Lenis milliseconds
+    });
+
+    // Lag smoothing pauses GSAP's clock after a long frame, which would strand
+    // Lenis mid-glide with no frames left to finish it.
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  // Used wherever the page has to move without the glide: landing at the top
+  // before anything is measured, where a 1.5s coast would be measured against.
+  function jumpToTop() {
+    if (lenis) {
+      lenis.scrollTo(0, { immediate: true, force: true });
+      return;
+    }
+    window.scrollTo(0, 0);
+  }
 
   // Reverting a SplitText changes layout, so ScrollTrigger has to remeasure.
   // Doing that from inside a completion handler recalculates while a pin is
@@ -960,7 +1018,7 @@
     // manual, and ScrollTrigger would then compute every start/end against a
     // scrolled document — which puts the sticky title over the hero and makes
     // reveals fire in the wrong places.
-    window.scrollTo(0, 0);
+    jumpToTop();
     try {
       buildIntro();
     } catch (e) {
@@ -993,12 +1051,21 @@
   // off — never both at once. If there is no overlay (the athlete page, or a
   // visitor whose head script never ran) the intro just starts.
   function boot() {
+    try {
+      buildSmoothScroll();
+    } catch (e) { /* native scrolling, which is the fallback everywhere */ }
+
     var loader = document.getElementById('loader');
     if (!loader || !root.classList.contains('is-loading')) {
       closeLoader();
       start();
       return;
     }
+
+    // The overlay already blocks scrolling in CSS; this stops Lenis from
+    // accumulating wheel deltas behind it and releasing them in a lurch the
+    // moment the sheet lifts.
+    if (lenis) lenis.stop();
     try {
       buildLoader(loader, start);
     } catch (e) {
