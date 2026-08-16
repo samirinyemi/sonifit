@@ -304,7 +304,8 @@
 
     // Each card owns its own trigger and plays through at its own speed the
     // moment it enters. Not scrubbed — a scrubbed reveal makes you keep
-    // scrolling to finish what the eye has already started reading.
+    // scrolling to finish what the eye has already started reading — but it
+    // does run backwards on the way up, so the section rewinds as you leave it.
     cards.forEach(function (card) {
       gsap.fromTo(card,
         { opacity: 0, y: 60 },
@@ -313,7 +314,11 @@
           y: 0,
           duration: 0.9,
           ease: 'power3.out',
-          scrollTrigger: { trigger: card, start: 'top 88%', once: true }
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 88%',
+            toggleActions: 'play none none reverse'
+          }
         });
     });
 
@@ -322,11 +327,19 @@
     if (!title || typeof gsap.matchMedia !== 'function') return;
 
     gsap.matchMedia().add('(min-width: 1280px)', function () {
+      // Held past the end of its own section and into the CTA. The CTA comes
+      // later in the DOM and carries an opaque photograph, so it slides up
+      // over the pinned title and swallows it — rather than the title simply
+      // stopping dead at the section boundary. Released at `top 20%`, by
+      // which point the title is completely covered, so nothing pops.
+      // Reversing the scroll runs the same thing backwards.
+      var next = document.querySelector('.cta');
+
       window.ScrollTrigger.create({
         trigger: title,
         start: 'center center',
-        endTrigger: section,
-        end: 'bottom center',
+        endTrigger: next || section,
+        end: next ? 'top 20%' : 'bottom center',
         pin: title,
         // the title is absolutely positioned in the scatter; spacing would
         // push the whole canvas down
@@ -348,15 +361,22 @@
     gsap.registerPlugin(window.ScrollTrigger);
 
     // Reveal and parallax touch different properties of the same element, so
-    // they can run as separate scrubbed tweens without fighting each other.
-    gsap.fromTo(imgs,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        ease: 'none',
-        stagger: 0.4,
-        scrollTrigger: { trigger: section, start: 'top 85%', end: 'center 60%', scrub: true }
-      });
+    // they never fight. The reveal plays through on entry and rewinds on the
+    // way back up; the parallax below stays scroll-linked.
+    imgs.forEach(function (img) {
+      gsap.fromTo(img,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: img,
+            start: 'top 88%',
+            toggleActions: 'play none none reverse'
+          }
+        });
+    });
 
     if (typeof gsap.matchMedia !== 'function') return;
 
@@ -390,6 +410,73 @@
         });
       });
     });
+  }
+
+  // A block of copy arrives line by line, each line climbing out from behind
+  // its own clipping edge, staggered in DOM order. Triggered once on entry
+  // rather than scrubbed, so it plays through at its own pace.
+  //
+  // No pre-hidden CSS state is needed: the mask does the hiding, so if the
+  // script never runs the copy is simply there.
+  function maskedReveal(container, selector, opts) {
+    opts = opts || {};
+    if (!container || !hasSplit || typeof window.ScrollTrigger === 'undefined') return;
+
+    gsap.registerPlugin(window.ScrollTrigger);
+
+    var localSplits = [];
+    var lines = [];
+
+    q(selector, container).forEach(function (el) {
+      try {
+        var s = new window.SplitText(el, { type: 'lines', mask: 'lines', linesClass: 'line' });
+        if (s.lines && s.lines.length) {
+          localSplits.push(s);
+          lines = lines.concat(s.lines);
+          return;
+        }
+      } catch (e) { /* fall through to the element itself */ }
+      lines.push(el);
+    });
+
+    if (!lines.length) return;
+
+    var tl = gsap.timeline({
+      defaults: { ease: 'power3.out' },
+      scrollTrigger: { trigger: container, start: opts.start || 'top 70%', once: true },
+      onComplete: function () {
+        // Hand the markup back so it re-wraps natively on resize.
+        localSplits.forEach(function (s) { s.revert(); });
+        window.ScrollTrigger.refresh();
+      }
+    });
+
+    tl.fromTo(lines,
+      { yPercent: 110 },
+      { yPercent: 0, duration: 0.9, stagger: opts.stagger || 0.045 }, 0);
+
+    if (opts.tail) {
+      tl.fromTo(opts.tail,
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7 }, '-=0.35');
+    }
+  }
+
+  function buildCopyReveals() {
+    var cta = document.querySelector('.cta');
+    if (cta) {
+      // DOM order is the stagger order: headline, then each side block.
+      maskedReveal(cta, '.cta__title, .cta__side p.label, .cta__side p.body, .cta__figures li', {
+        start: 'top 65%',
+        tail: cta.querySelector('.btn')
+      });
+    }
+
+    maskedReveal(
+      document.querySelector('.collection__head'),
+      '.collection__title, .collection__lede, .collection__details .body p',
+      { start: 'top 80%' }
+    );
   }
 
   // The full-bleed plate opens from a small centred rectangle to full width as
@@ -439,6 +526,9 @@
     try {
       buildPlate();
     } catch (e) { /* plate stays at full bleed */ }
+    try {
+      buildCopyReveals();
+    } catch (e) { /* copy stays visible, which is the end state */ }
   }
 
   // Wait for fonts before splitting — line breaks measured against a fallback
