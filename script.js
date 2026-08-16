@@ -817,9 +817,18 @@
       // dozen pixels taller and would start at a different scroll position.
       // Both copies share an offsetParent and an offsetTop, so they compute
       // the same start without needing to share a trigger element.
+      // The hold runs until the middle of the section below reaches the middle
+      // of the screen. That section carries an opaque ground, so it arrives
+      // over the held name and takes it out of the page — the name is never
+      // seen again further down. Ending on the hero's own bottom instead would
+      // release it too early, in open space, where it just slides away.
+      var next = document.querySelector('.ath-statement--first');
       var copies = q('.ath__title');
       var holds = copies.map(function (copy) {
-        return holdInPlace(copy, { endTrigger: section, end: 'bottom center' });
+        return holdInPlace(copy, {
+          endTrigger: next || section,
+          end: next ? 'center center' : 'bottom center'
+        });
       });
 
       // Same reason as the home page: clear the offsets by hand when the

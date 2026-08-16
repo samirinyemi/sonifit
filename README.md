@@ -259,8 +259,16 @@ so you never have to keep scrolling to finish what you have started reading.
 The word "Athletes" pins when it reaches the middle of the screen and holds
 until the end of its section reaches the middle — the photography keeps
 scrolling past a held title. Same on the athlete page for the name, where
-*both* copies (solid and stroke-only) pin off a single shared trigger, so the
-outline stays registered with the pictures moving behind it.
+*both* copies (solid and stroke-only) hold together, so the outline stays
+registered with the pictures moving behind it.
+
+Neither title is released in open space. Each holds until the section below it
+arrives, and that section carries an opaque ground — the CTA photograph on the
+home page, `--bg` painted onto `.ath-statement--first` on the athlete page —
+so the title is taken out of the page rather than left to slide away, and is
+never seen again further down. On the athlete page the clearance under the
+collage is `padding-top` rather than `margin-top` for exactly this reason: a
+margin leaves the gap transparent and the name would show while crossing it.
 
 The hold derives its start from `offsetTop` on the title's `offsetParent`,
 never from the title's own bounding box — the box carries the transform the

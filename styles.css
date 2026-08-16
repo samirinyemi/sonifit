@@ -955,9 +955,23 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 .ath-statement { margin-top: calc(107 * var(--u)); }
 
-/* Extra breathing room under the collage — the name runs long and needs
-   clearance before the statement starts. */
-.ath-statement--first { margin-top: calc(82 * var(--u) + 100px); }
+/* The section the name disappears behind.
+
+   It carries the page's own ground rather than inheriting it, so it is opaque
+   — the name holds at the middle of the screen, this arrives over the top of
+   it, and from here down the name is gone. Without a painted ground the name
+   would keep showing through every section below it.
+
+   The clearance under the collage is padding, not margin: margin leaves the
+   gap transparent and the name would be visible crossing it. Same distance,
+   painted. */
+.ath-statement--first {
+  position: relative;
+  z-index: 4;                     /* over the stroked copy, which sits at 3 */
+  margin-top: 0;
+  padding-top: calc(82 * var(--u) + 100px);
+  background: var(--bg);
+}
 
 .ath-statement__quote {
   margin: 0;
@@ -1163,7 +1177,9 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   }
 
   .ath-statement { margin-top: 72px; }
-  .ath-statement--first { margin-top: 64px; }
+  /* Below the breakpoint the collage stacks, nothing overlaps and the name
+     does not hold, so this is spacing again rather than cover. */
+  .ath-statement--first { margin-top: 64px; padding-top: 0; }
   .ath-statement__quote { margin-top: 32px; }
 
   .ath-plate {
