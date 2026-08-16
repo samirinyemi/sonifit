@@ -32,8 +32,8 @@
   var STAGGER = 0.42;    // band N opens at N/BANDS * this
   var SLIP = 0.055;      // vertical travel, as a fraction of the frame
   var SPLIT = 0.0035;    // channel separation in UV — press artefact, not glitch
-  var ENTER = 900;       // ms
-  var LEAVE = 700;       // ms
+  var ENTER = 750;       // ms
+  var LEAVE = 600;       // ms
 
   /* ----------------------------------------------------------------- gate */
 

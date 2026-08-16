@@ -356,14 +356,10 @@
       }
     }, 0.2);
 
-    // Everything clears before the overlay itself moves, so the exit is one
-    // gesture rather than a sheet of type sliding off the top.
-    tl.to(sides.concat(count ? [count.parentNode] : []),
-      { autoAlpha: 0, duration: 0.35 }, '>-0.05');
-
-    tl.to(box, { scale: 1.08, autoAlpha: 0, duration: 0.5 }, '<');
-
-    tl.to(loader, { yPercent: -100, duration: 0.8, ease: 'power4.inOut' }, '>-0.15');
+    // Nothing fades on the way out. The frame, the type and the counter stay
+    // fully lit and ride up on the ground they are printed on — the overlay
+    // leaves as one sheet, and the page is simply behind it.
+    tl.to(loader, { yPercent: -100, duration: 0.9, ease: 'power4.inOut' }, '>+0.15');
 
     return tl;
   }

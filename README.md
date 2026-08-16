@@ -117,8 +117,7 @@ the two never overlap.
 | `0.25` | The two side lines fade up, 0.1s apart |
 | `0.20` | The counter runs **0 → 100** over 1.9s |
 | — | Every on-body photograph in the collection flips through the frame, stepped by the counter itself rather than its own timer, so the number and the images can never drift apart |
-| `2.10` | Type clears, the frame scales past 1 and goes |
-| `2.40` | The whole overlay leaves upward |
+| `2.25` | The whole sheet leaves upward. Nothing fades — the frame, the type and the counter stay lit and ride up on the ground they are printed on |
 
 `is-loading` is set on `<html>` in the `<head>`, before first paint, and the
 overlay only exists while it is there. Every exit from `script.js` clears it —
@@ -215,7 +214,7 @@ while the incoming one arrives from the opposite direction, and the direction
 alternates band to band, so it reads as interleaved strips rather than one
 wipe with a soft edge. An RGB channel split peaks at the halfway point of each
 band and resolves to exactly zero at both ends — `0.0035` in UV, small enough
-to read as press misregistration rather than glitch art. 900ms in, 700ms out.
+to read as press misregistration rather than glitch art. 750ms in, 600ms out.
 
 Nothing scales, lifts or shadows. The transition *is* the interaction; the
 composition, the grid and the captions stay where they are.
