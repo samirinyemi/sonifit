@@ -78,6 +78,20 @@
     return Array.prototype.slice.call((ctx || document).querySelectorAll(sel));
   };
 
+  // Reverting a SplitText changes layout, so ScrollTrigger has to remeasure.
+  // Doing that from inside a completion handler recalculates while a pin is
+  // mid-flight, which corrupts every other trigger's start/end. Batch them
+  // into one refresh on a later tick instead.
+  var refreshTimer;
+
+  function scheduleRefresh() {
+    if (typeof window.ScrollTrigger === 'undefined') return;
+    window.clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(function () {
+      window.ScrollTrigger.refresh();
+    }, 250);
+  }
+
   // Split an element into masked lines, so they can slide up from behind their
   // own clipping edge rather than just fading. Returns the line elements, or
   // the element itself if SplitText is unavailable.
@@ -125,7 +139,7 @@
         gsap.set(q('.hero [data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
         if (rule) gsap.set(rule, { clearProps: 'all' });
-        if (typeof window.ScrollTrigger !== 'undefined') window.ScrollTrigger.refresh();
+        scheduleRefresh();
       }
     });
 
@@ -288,6 +302,70 @@
     });
   }
 
+  /* --------------------------------------------------------- sticky hold --- */
+
+  // Hold an element at screen centre without ScrollTrigger's `pin`.
+  //
+  // Both titles that need this are absolutely positioned inside a scatter
+  // canvas whose coordinates are driven by --u. ScrollTrigger's pin swaps them
+  // to `position: fixed` and inserts a pin-spacer, which computes the wrong
+  // coordinates in that context — the title ended up floating over the hero —
+  // and the layout churn corrupted the start/end of every other trigger on the
+  // page.
+  //
+  // Translating instead is exact and inert: move the element down by precisely
+  // as much as the page scrolls, and it appears to stand still. Nothing leaves
+  // the flow, nothing is measured twice, and scrolling back up unwinds it to
+  // y: 0 — its original place in the middle of the images.
+  function holdInPlace(el, opts) {
+    if (!el || typeof window.ScrollTrigger === 'undefined') return;
+
+    gsap.registerPlugin(window.ScrollTrigger);
+
+    return window.ScrollTrigger.create({
+      trigger: opts.trigger || el,
+      start: opts.start || 'center center',
+      endTrigger: opts.endTrigger,
+      end: opts.end,
+      invalidateOnRefresh: true,
+      onUpdate: function (self) {
+        gsap.set(el, { y: (self.end - self.start) * self.progress });
+      },
+      onRefresh: function (self) {
+        gsap.set(el, { y: (self.end - self.start) * self.progress });
+      }
+    });
+  }
+
+  /* ------------------------------------------------------- media reveals --- */
+
+  // Every photograph on the site fades up as it arrives and rewinds as it
+  // leaves upward — `play none none reverse`. Not scrubbed: each one plays
+  // through at its own speed, so you never have to keep scrolling to finish
+  // a reveal. The hero is excluded; that one belongs to the load sequence.
+  function revealMedia(elements, opts) {
+    opts = opts || {};
+    if (!elements || !elements.length || typeof window.ScrollTrigger === 'undefined') return;
+
+    gsap.registerPlugin(window.ScrollTrigger);
+
+    elements.forEach(function (el) {
+      gsap.fromTo(el,
+        { opacity: 0, y: opts.rise === 0 ? 0 : (opts.rise || 60) },
+        {
+          opacity: 1,
+          y: 0,
+          duration: opts.duration || 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: opts.start || 'top 88%',
+            toggleActions: 'play none none reverse'
+          }
+        });
+    });
+  }
+
   /* --------------------------------------------------- athletes section --- */
 
   // Two things move here. The cards fade up one at a time as the section
@@ -302,48 +380,20 @@
 
     gsap.registerPlugin(window.ScrollTrigger);
 
-    // Each card owns its own trigger and plays through at its own speed the
-    // moment it enters. Not scrubbed — a scrubbed reveal makes you keep
-    // scrolling to finish what the eye has already started reading — but it
-    // does run backwards on the way up, so the section rewinds as you leave it.
-    cards.forEach(function (card) {
-      gsap.fromTo(card,
-        { opacity: 0, y: 60 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: card,
-            start: 'top 88%',
-            toggleActions: 'play none none reverse'
-          }
-        });
-    });
+    revealMedia(cards);
 
     // Only above the reflow breakpoint. Below it the scatter becomes a column
     // and the title sits in normal flow, where pinning would read as a glitch.
     if (!title || typeof gsap.matchMedia !== 'function') return;
 
-    gsap.matchMedia().add('(min-width: 1280px)', function () {
-      // Held past the end of its own section and into the CTA. The CTA comes
-      // later in the DOM and carries an opaque photograph, so it slides up
-      // over the pinned title and swallows it — rather than the title simply
-      // stopping dead at the section boundary. Released at `top 20%`, by
-      // which point the title is completely covered, so nothing pops.
-      // Reversing the scroll runs the same thing backwards.
-      var next = document.querySelector('.cta');
+    if (!title || typeof gsap.matchMedia !== 'function') return;
 
-      window.ScrollTrigger.create({
+    gsap.matchMedia().add('(min-width: 1280px)', function () {
+      var next = document.querySelector('.cta');
+      holdInPlace(title, {
         trigger: title,
-        start: 'center center',
         endTrigger: next || section,
-        end: next ? 'top 20%' : 'bottom center',
-        pin: title,
-        // the title is absolutely positioned in the scatter; spacing would
-        // push the whole canvas down
-        pinSpacing: false
+        end: next ? 'top 20%' : 'bottom center'
       });
     });
   }
@@ -363,20 +413,7 @@
     // Reveal and parallax touch different properties of the same element, so
     // they never fight. The reveal plays through on entry and rewinds on the
     // way back up; the parallax below stays scroll-linked.
-    imgs.forEach(function (img) {
-      gsap.fromTo(img,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: img,
-            start: 'top 88%',
-            toggleActions: 'play none none reverse'
-          }
-        });
-    });
+    revealMedia(imgs, { rise: 0, duration: 0.8 });
 
     if (typeof gsap.matchMedia !== 'function') return;
 
@@ -391,22 +428,19 @@
         });
       });
 
-      // Both copies of the name pin together — the solid one under the
+      // Both copies of the name hold together — the solid one under the
       // photography and the stroke-only one above it — so the outline keeps
       // registering with the pictures as they move past. They share a single
       // trigger element: measured separately, the stroked copy is a couple of
-      // dozen pixels taller and would pin at a different scroll position.
+      // dozen pixels taller and would start at a different scroll position.
       var copies = q('.ath__title');
       var lead = copies[0];
 
       copies.forEach(function (copy) {
-        window.ScrollTrigger.create({
+        holdInPlace(copy, {
           trigger: lead,
-          start: 'center center',
           endTrigger: section,
-          end: 'bottom center',
-          pin: copy,
-          pinSpacing: false
+          end: 'bottom center'
         });
       });
     });
@@ -447,7 +481,7 @@
       onComplete: function () {
         // Hand the markup back so it re-wraps natively on resize.
         localSplits.forEach(function (s) { s.revert(); });
-        window.ScrollTrigger.refresh();
+        scheduleRefresh();
       }
     });
 
@@ -477,6 +511,9 @@
       '.collection__title, .collection__lede, .collection__details .body p',
       { start: 'top 80%' }
     );
+
+    // The eleven product cards, same rule as every other photograph.
+    revealMedia(q('.scatter--products .product'));
   }
 
   // The full-bleed plate opens from a small centred rectangle to full width as
@@ -506,6 +543,13 @@
 
   function start() {
     window.clearTimeout(failsafe);
+
+    // Land at the top before anything is measured. Some browsers restore the
+    // previous scroll position after load even with scrollRestoration set to
+    // manual, and ScrollTrigger would then compute every start/end against a
+    // scrolled document — which puts the sticky title over the hero and makes
+    // reveals fire in the wrong places.
+    window.scrollTo(0, 0);
     try {
       buildIntro();
     } catch (e) {
