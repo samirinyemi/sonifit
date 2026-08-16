@@ -214,11 +214,39 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   padding-block: calc(23 * var(--u)) calc(16 * var(--u));
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  /* the nav is fixed now, so only the foot is in here and it anchors bottom */
+  justify-content: flex-end;
   gap: calc(40 * var(--u));
 }
 
 /* --- nav --- */
+
+/* Lifted out of the hero and fixed, so it rides along the whole page. The bar
+   itself ignores the pointer; only the nav row inside it takes clicks, so it
+   never blocks the content behind. */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+  padding-top: calc(23 * var(--u));
+  pointer-events: none;
+  color: var(--red);
+  transition: color 0.45s var(--ease);
+}
+
+.nav-bar .nav { pointer-events: auto; }
+
+/* Over the hero it is red on footage. Once the bar clears the hero it is
+   sitting on the cream ground, where near-black reads far better than red —
+   3.43:1 against 17.9:1. */
+.nav-bar.is-over-page { color: var(--ink); }
+
+/* The centre mark drops away the moment the page moves; the links stay at
+   full strength. */
+.nav-bar .nav__mark { transition: opacity 0.4s var(--ease); }
+.nav-bar.is-scrolled .nav__mark { opacity: 0; pointer-events: none; }
 
 /* The row is exactly the height of the mark. It used to be `29 * --u`, which
    kept scaling after the mark was pinned to 29px — the leftover slack then
@@ -694,9 +722,8 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
    --l / --t / --w / --h.
    ========================================================================== */
 
-.page-athlete .nav { padding-top: calc(23 * var(--u)); }
-
-.ath-hero { margin-top: calc(46 * var(--u)); }
+/* 23 above the nav + 46 below it, plus the nav's own fixed 29px */
+.ath-hero { margin-top: calc(69 * var(--u) + 29px); }
 
 .scatter--athlete { height: calc(998 * var(--u)); }
 
@@ -935,9 +962,7 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
   /* --- athlete detail page --- */
 
-  .page-athlete .nav { padding-top: 24px; }
-
-  .ath-hero { margin-top: 40px; }
+  .ath-hero { margin-top: 93px; }
 
   .scatter--athlete {
     display: flex;

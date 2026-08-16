@@ -7,7 +7,7 @@
 <meta name="description" content="Twelve products. Built for the distance, not the photograph. A signature running collection by Soni Labs Studio.">
 <meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=16">
 <script>
   /* Set before first paint so the hero never flashes its finished state. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -23,6 +23,21 @@
 
 <a class="skip-link" href="#collection">Skip to the collection</a>
 
+<div class="nav-bar" id="nav-bar">
+  <div class="shell">
+      <nav class="nav" data-node-id="48:1100" aria-label="Primary">
+        <a class="nav__brand" href="#top" data-anim>MADE BY SONI</a>
+        <a class="nav__mark" href="#top" aria-label="SONIFIT home" data-anim>
+          <img src="assets/svg/logo-mark.svg" alt="">
+        </a>
+        <ul class="nav__links">
+          <li data-anim><a href="#cta">IMPACT</a></li>
+          <li data-anim><a href="#athletes">ATHLETES</a></li>
+        </ul>
+      </nav>
+  </div>
+</div>
+
 <!-- ============================ HERO ============================ -->
 <header class="hero" id="top" data-node-id="48:1095">
   <video class="hero__video" src="assets/video/hero.mp4" poster="assets/img/hero-poster.jpg"
@@ -31,16 +46,6 @@
 
   <div class="hero__inner">
 
-    <nav class="nav" data-node-id="48:1100" aria-label="Primary">
-      <a class="nav__brand" href="#top" data-anim>MADE BY SONI</a>
-      <a class="nav__mark" href="#top" aria-label="SONIFIT home" data-anim>
-        <img src="assets/svg/logo-mark.svg" alt="">
-      </a>
-      <ul class="nav__links">
-        <li data-anim><a href="#cta">IMPACT</a></li>
-        <li data-anim><a href="#athletes">ATHLETES</a></li>
-      </ul>
-    </nav>
 
     <div class="hero__foot">
       <p class="hero__blurb" data-anim data-node-id="48:1106">Created by the soni labs studio, this signature collection is to celebrate and brings inspiration and innovation to every athlete in the world.</p>
@@ -342,6 +347,6 @@
 <script src="assets/js/gsap.min.js"></script>
 <script src="assets/js/SplitText.min.js"></script>
 <script src="assets/js/ScrollTrigger.min.js"></script>
-<script src="script.js?v=12"></script>
+<script src="script.js?v=16"></script>
 </body>
 </html>

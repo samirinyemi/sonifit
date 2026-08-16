@@ -47,6 +47,15 @@
     reduce.addEventListener('change', applyMotionPreference);
   }
 
+  /* ------------------------------------------------------------- sticky nav */
+
+  // Runs ahead of the GSAP and reduced-motion guards: a sticky, legible nav is
+  // functionality, not decoration, so it must work with animations off or the
+  // animation libraries missing.
+  try {
+    buildNav();
+  } catch (e) { /* the bar stays red, which is the hero state */ }
+
   /* ------------------------------------------------------------ hero intro */
 
   function reveal() {
@@ -136,7 +145,10 @@
         splits.forEach(function (s) { s.revert(); });
         splits.length = 0;
         reveal();
-        gsap.set(q('.hero [data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
+        // Every animated element, not just the ones inside .hero — the nav now
+        // lives in the fixed bar, and a leftover inline opacity there would
+        // outrank the stylesheet rule that fades the mark out on scroll.
+        gsap.set(q('[data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
         if (rule) gsap.set(rule, { clearProps: 'all' });
         scheduleRefresh();
@@ -317,14 +329,27 @@
   // as much as the page scrolls, and it appears to stand still. Nothing leaves
   // the flow, nothing is measured twice, and scrolling back up unwinds it to
   // y: 0 — its original place in the middle of the images.
+  // The element must never be its own trigger. Translating it moves its
+  // bounding box, ScrollTrigger re-measures that box on the next refresh, the
+  // start shifts, the progress changes, and the translate changes again — a
+  // feedback loop that parks the title at an arbitrary offset.
+  //
+  // So: trigger on the element's offsetParent, which is stable, and derive the
+  // start from `offsetTop`. Offsets are layout values, unaffected by any
+  // transform, so the measurement can never chase itself.
   function holdInPlace(el, opts) {
     if (!el || typeof window.ScrollTrigger === 'undefined') return;
 
     gsap.registerPlugin(window.ScrollTrigger);
 
+    var anchor = el.offsetParent;
+    if (!anchor) return;
+
     return window.ScrollTrigger.create({
-      trigger: opts.trigger || el,
-      start: opts.start || 'center center',
+      trigger: anchor,
+      start: function () {
+        return 'top+=' + (el.offsetTop + el.offsetHeight / 2) + ' center';
+      },
       endTrigger: opts.endTrigger,
       end: opts.end,
       invalidateOnRefresh: true,
@@ -335,6 +360,40 @@
         gsap.set(el, { y: (self.end - self.start) * self.progress });
       }
     });
+  }
+
+  /* ------------------------------------------------------------ sticky nav --- */
+
+  // Two independent states, because they answer two different questions.
+  //
+  // `is-scrolled` — has the page moved at all? Drops the centre mark. Fires
+  // almost immediately, which is what makes it feel responsive.
+  //
+  // `is-over-page` — is the bar still over the hero footage, or has it reached
+  // the cream ground? This one drives colour. It cannot share the first
+  // threshold: switching to near-black 40px into a 100vh hero would put dark
+  // text on dark video for the rest of the section.
+  function buildNav() {
+    var bar = document.querySelector('.nav-bar');
+    if (!bar) return;
+
+    var dark = document.querySelector('.hero, .ath-hero');
+
+    function update() {
+      bar.classList.toggle('is-scrolled', window.scrollY > 40);
+
+      var overDark = false;
+      if (dark) {
+        // the bar sits at the top, so compare against the dark block's bottom
+        var edge = dark.getBoundingClientRect().bottom;
+        overDark = edge > bar.getBoundingClientRect().bottom;
+      }
+      bar.classList.toggle('is-over-page', !overDark);
+    }
+
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
   }
 
   /* ------------------------------------------------------- media reveals --- */
@@ -391,7 +450,6 @@
     gsap.matchMedia().add('(min-width: 1280px)', function () {
       var next = document.querySelector('.cta');
       holdInPlace(title, {
-        trigger: title,
         endTrigger: next || section,
         end: next ? 'top 20%' : 'bottom center'
       });
@@ -433,15 +491,10 @@
       // registering with the pictures as they move past. They share a single
       // trigger element: measured separately, the stroked copy is a couple of
       // dozen pixels taller and would start at a different scroll position.
-      var copies = q('.ath__title');
-      var lead = copies[0];
-
-      copies.forEach(function (copy) {
-        holdInPlace(copy, {
-          trigger: lead,
-          endTrigger: section,
-          end: 'bottom center'
-        });
+      // Both copies share an offsetParent and an offsetTop, so they compute
+      // the same start without needing to share a trigger element.
+      q('.ath__title').forEach(function (copy) {
+        holdInPlace(copy, { endTrigger: section, end: 'bottom center' });
       });
     });
   }
