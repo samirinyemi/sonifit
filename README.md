@@ -20,7 +20,7 @@ Then open <http://localhost:5173>.
 | `athlete.html` | Athlete detail page (Figma `42:280`). Linked from every athlete card. |
 | `styles.css` | All styling, tokens and breakpoints. |
 | `script.js` | Scrollbar measurement, hero intro timeline, reduced-motion handling. |
-| `assets/js/` | GSAP 3.13 + SplitText, self-hosted. No CDN at runtime. |
+| `assets/js/` | GSAP 3.13 + SplitText + ScrollTrigger, self-hosted. No CDN at runtime. |
 | `assets/` | Video, images, SVG exports. |
 
 ## Palette
@@ -133,20 +133,50 @@ Robustness:
 The athlete page reuses the same timeline — its nav, name and two descriptions
 carry `data-anim` and stagger in together.
 
-## Typewriter — "The Collection"
+## Scroll choreography
 
-The heading types itself out when it scrolls into view (ScrollTrigger,
-`start: "top 85%"`, fires once), with a caret blinking at the cursor.
+All of it is ScrollTrigger. Two kinds, used deliberately:
 
-- Per-character delay is randomised (42–97ms) with an extra beat after a space
-  and an occasional longer hesitation, so the cadence reads as a person rather
-  than a metronome.
-- The real text is in the markup; JS reads it, clears it, and types it back — so
-  with JS off the heading is simply there.
-- The heading's finished height is locked with `min-height` before typing, so
-  the details column beside it does not jump as lines appear.
-- The caret is `display: none` until `.is-typing` is on the heading, and comes
-  off ~0.9s after the last character.
+**Scrubbed** — tied to the scrollbar, reverses when you scroll back.
+
+| What | Behaviour |
+| --- | --- |
+| The big uppercase statements | Words start at 18% opacity and light up in sequence, fully lit by the time the block sits mid-screen |
+| Collage photographs (athlete page) | Drift at five different rates as the section passes |
+| The full-bleed plate | Opens from a small centred rectangle (`clip-path: inset(16% 24%)`) to full bleed, with the image easing from 1.18 to 1 |
+
+**Triggered** — fires once on entry and plays through at its own speed,
+so you never have to keep scrolling to finish what you have started reading.
+
+| What | Behaviour |
+| --- | --- |
+| Athlete cards (home) | Each card owns its trigger, fading up 60px over 0.9s as it crosses 88% of the viewport |
+| Collage photographs | Fade in one at a time as the section arrives |
+
+**Pinned**
+
+The word "Athletes" pins when it reaches the middle of the screen and holds
+until the end of its section reaches the middle — the photography keeps
+scrolling past a held title. Same on the athlete page for the name, where
+*both* copies (solid and stroke-only) pin off a single shared trigger, so the
+outline stays registered with the pictures moving behind it.
+
+Pins use `pinSpacing: false` — the titles are absolutely positioned inside
+their scatter canvases, and spacing would push the whole canvas down. Pinning
+is gated to `min-width: 1280px` via `gsap.matchMedia()`; below that the
+scatters become columns and a pin would read as a glitch.
+
+### Splitting text
+
+Two different SplitText modes, for two different reasons:
+
+- **Lines**, with `mask: 'lines'` — the hero paragraph and the athlete page's
+  lede and note. Each line slides up from behind its own clipping edge. Reverted
+  on completion so the text re-wraps natively on resize.
+- **Words**, with `tag: 'span'` and `display: inline` — the statements. The
+  default (inline-block `div`s) re-flows the paragraph into a broken grid;
+  plain inline spans keep the wrapping identical to the unsplit text, and
+  opacity animates fine on an inline box.
 
 ## Custom cursor
 
