@@ -117,13 +117,19 @@ the two never overlap.
 | `0.25` | The two side lines fade up, 0.1s apart |
 | `0.20` | The counter runs **0 → 100** over 1.9s |
 | — | Every on-body photograph in the collection flips through the frame, stepped by the counter itself rather than its own timer, so the number and the images can never drift apart |
-| `2.25` | The whole sheet leaves upward. Nothing fades — the frame, the type and the counter stay lit and ride up on the ground they are printed on |
+| `2.25` | The whole sheet leaves upward. Nothing fades — the frame, the type and the counter stay lit and ride up on the ground they are printed on. The hero showreel starts from frame zero on the same beat, so it is already running as it is uncovered |
 
 `is-loading` is set on `<html>` in the `<head>`, before first paint, and the
 overlay only exists while it is there. Every exit from `script.js` clears it —
 no GSAP, reduced motion, a thrown tween, a missing node — and there is a 9s
 timer in the head as a last belt. There is no path that leaves a visitor behind
 a blank screen.
+
+The hero video keeps its `autoplay` attribute so it still runs with JS off, but
+`script.js` pauses and rewinds it the moment it parses, and only releases it
+when the overlay starts moving — nobody watches three seconds of a showreel
+from behind a loading screen. Every path that dismisses the overlay starts it,
+so a failsafe exit cannot leave a frozen video behind.
 
 ## Hero intro (GSAP)
 

@@ -29,15 +29,58 @@
   /* ----------------------------------------------------------------- video */
 
   var video = document.querySelector('.hero__video');
+  var videoHeld = false;
+  var videoStarted = false;
+
+  function rewind() {
+    try {
+      video.currentTime = 0;
+    } catch (e) { /* not seekable yet — it has not started either */ }
+  }
+
+  // The showreel belongs to the hero, not to the load sequence. It is held at
+  // frame zero behind the overlay and only runs once the overlay is leaving,
+  // so the first thing uncovered is the opening frame rather than three
+  // seconds the visitor never saw.
+  function holdVideo() {
+    if (!video) return;
+    videoHeld = true;
+    video.pause();
+    rewind();
+  }
+
+  function startVideo() {
+    if (!video || videoStarted || reduce.matches) return;
+    videoStarted = true;
+    videoHeld = false;
+    rewind();
+    var play = video.play();
+    if (play && typeof play.catch === 'function') play.catch(function () {});
+  }
+
+  // `autoplay` stays in the markup so the video still runs with JS off. The
+  // spec clears the autoplaying flag as soon as a script pauses the element,
+  // but the listener is a cheap belt in case a browser tries again once it has
+  // buffered enough.
+  if (video) {
+    video.addEventListener('play', function () {
+      if (videoHeld) {
+        video.pause();
+        rewind();
+      }
+    });
+  }
 
   function applyMotionPreference() {
     if (!video) return;
     if (reduce.matches) {
       video.pause();
       video.removeAttribute('autoplay');
+      videoStarted = false;   // so switching the preference back starts it
+    } else if (root.classList.contains('is-loading')) {
+      holdVideo();
     } else {
-      var play = video.play();
-      if (play && typeof play.catch === 'function') play.catch(function () {});
+      startVideo();
     }
   }
 
@@ -64,6 +107,10 @@
   // timer fires.
   function closeLoader() {
     root.classList.remove('is-loading');
+    // Whatever dismissed the overlay — the sequence finishing, a failsafe, no
+    // GSAP at all — this is the moment the hero is the visitor's to look at,
+    // so the showreel runs from its first frame. Starting twice is a no-op.
+    startVideo();
   }
 
   /* ------------------------------------------------------------ hero intro */
@@ -359,7 +406,14 @@
     // Nothing fades on the way out. The frame, the type and the counter stay
     // fully lit and ride up on the ground they are printed on — the overlay
     // leaves as one sheet, and the page is simply behind it.
-    tl.to(loader, { yPercent: -100, duration: 0.9, ease: 'power4.inOut' }, '>+0.15');
+    tl.to(loader, {
+      yPercent: -100,
+      duration: 0.9,
+      ease: 'power4.inOut',
+      // As the sheet starts to move, not after it has gone: the hero is
+      // uncovered with the showreel already running from frame one.
+      onStart: startVideo
+    }, '>+0.15');
 
     return tl;
   }
