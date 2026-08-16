@@ -56,6 +56,16 @@
     buildNav();
   } catch (e) { /* the bar stays red, which is the hero state */ }
 
+  /* ---------------------------------------------------------------- loader */
+
+  // The overlay exists only while `is-loading` is on <html> — set in the head
+  // so it is up before first paint. Every path out of this file has to clear
+  // it, or the page is left behind a blank screen until the head's failsafe
+  // timer fires.
+  function closeLoader() {
+    root.classList.remove('is-loading');
+  }
+
   /* ------------------------------------------------------------ hero intro */
 
   function reveal() {
@@ -65,6 +75,7 @@
   // No GSAP (blocked, offline, failed request): show the finished state and
   // stop. The page must never depend on the animation.
   if (typeof window.gsap === 'undefined') {
+    closeLoader();
     reveal();
     return;
   }
@@ -76,6 +87,7 @@
   // Reduced motion: skip the entrance and the typing outright, but keep the
   // cursor — it is a pointer affordance, not decoration. It just stops easing.
   if (reduce.matches) {
+    closeLoader();
     reveal();
     try {
       buildCursor();
@@ -272,6 +284,90 @@
     });
   }
 
+  /* ------------------------------------------------------------ loader ---- */
+
+  // The load sequence: the frame rises from below the fold small, settles at
+  // the centre at full size, and flips through every on-body photograph in the
+  // collection while a counter runs 0 to 100. Then the whole overlay leaves
+  // upward and the hero intro takes over — the two never overlap.
+  //
+  // `done` is called exactly once, whatever happens: a broken image, a missing
+  // node or a thrown tween must not strand the visitor behind the overlay.
+  function buildLoader(loader, done) {
+    var box = loader.querySelector('.loader__box');
+    var shots = q('.loader__box img', loader);
+    var sides = q('.loader__side', loader);
+    var count = loader.querySelector('#loader-count');
+    var counter = { value: 0 };
+    var showing = -1;
+
+    if (!box || !shots.length) {
+      closeLoader();
+      done();
+      return;
+    }
+
+    shots[0].classList.add('is-on');
+
+    // Write the opening state synchronously. A timeline renders lazily on its
+    // first tick, which would leave one frame of the finished composition —
+    // box centred, sides lit — before it snaps down to the start.
+    gsap.set(box, { yPercent: 55, scale: 0.72, autoAlpha: 0 });
+    if (sides.length) gsap.set(sides, { y: 14, autoAlpha: 0 });
+
+    // One image on at a time, stepped by the counter rather than by its own
+    // timer — the flipping and the number are the same motion, so they can
+    // never drift apart or finish at different moments.
+    function flip(progress) {
+      var i = Math.min(shots.length - 1, Math.floor(progress * shots.length));
+      if (i === showing) return;
+      if (showing >= 0) shots[showing].classList.remove('is-on');
+      shots[i].classList.add('is-on');
+      showing = i;
+    }
+
+    var tl = gsap.timeline({
+      defaults: { ease: 'power3.out' },
+      onComplete: function () {
+        closeLoader();
+        done();
+      }
+    });
+
+    // Below the fold and undersized, so it reads as arriving rather than
+    // fading up in place.
+    tl.fromTo(box,
+      { yPercent: 55, scale: 0.72, autoAlpha: 0 },
+      { yPercent: 0, scale: 1, autoAlpha: 1, duration: 1.15 }, 0);
+
+    if (sides.length) {
+      tl.fromTo(sides,
+        { y: 14, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.1 }, 0.25);
+    }
+
+    tl.to(counter, {
+      value: 100,
+      duration: 1.9,
+      ease: 'power1.inOut',
+      onUpdate: function () {
+        if (count) count.textContent = Math.round(counter.value);
+        flip(counter.value / 100);
+      }
+    }, 0.2);
+
+    // Everything clears before the overlay itself moves, so the exit is one
+    // gesture rather than a sheet of type sliding off the top.
+    tl.to(sides.concat(count ? [count.parentNode] : []),
+      { autoAlpha: 0, duration: 0.35 }, '>-0.05');
+
+    tl.to(box, { scale: 1.08, autoAlpha: 0, duration: 0.5 }, '<');
+
+    tl.to(loader, { yPercent: -100, duration: 0.8, ease: 'power4.inOut' }, '>-0.15');
+
+    return tl;
+  }
+
   /* ----------------------------------------------------- scroll reveal ---- */
 
   // The big uppercase statements start dim and light up word by word as they
@@ -366,33 +462,102 @@
 
   // `is-scrolled` drops the centre mark once the page moves.
   //
-  // `is-inverted` turns the bar white while it overlaps a block flagged
-  // [data-nav="invert"] — the full-bleed red and dark imagery. Everywhere else
-  // it is plain red on cream. Done by hit-testing the bar against those blocks
-  // rather than by blending, because no blend mode can render red-on-red as
-  // white while leaving red-on-cream untouched.
+  // The colour is red everywhere, always — no blend mode, no second colour on
+  // the element. Where the bar crosses a red block, only the *overlapping
+  // pixels* turn white. A class switch cannot do that; it repaints the whole
+  // element. So the nav is drawn twice: the real one in red, and a white copy
+  // stacked exactly on top, clipped to the union of the red blocks currently
+  // under the bar. Outside those rectangles the white copy is clipped away and
+  // the red original shows through.
+  //
+  // The clip is an SVG <clipPath> of one <rect> per block, which is how you
+  // express a union — CSS clip-path takes a single shape.
   function buildNav() {
     var bar = document.querySelector('.nav-bar');
     if (!bar) return;
 
-    var inverters = Array.prototype.slice.call(
-      document.querySelectorAll('[data-nav="invert"]')
-    );
-
-    function update() {
+    function setScrolled() {
       bar.classList.toggle('is-scrolled', window.scrollY > 40);
-
-      var edge = bar.getBoundingClientRect().bottom;
-      var over = inverters.some(function (block) {
-        var r = block.getBoundingClientRect();
-        return r.top < edge && r.bottom > 0;
-      });
-      bar.classList.toggle('is-inverted', over);
     }
 
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
+    setScrolled();
+    window.addEventListener('scroll', setScrolled, { passive: true });
+
+    var shell = bar.querySelector('.shell');
+    var nav = bar.querySelector('.nav');
+    var reds = Array.prototype.slice.call(document.querySelectorAll('[data-nav-red]'));
+    if (!shell || !nav || !reds.length) return;
+
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'nav-clip');
+    svg.setAttribute('aria-hidden', 'true');
+    var clip = document.createElementNS(NS, 'clipPath');
+    clip.setAttribute('id', 'nav-red-clip');
+    clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+    svg.appendChild(clip);
+    document.body.appendChild(svg);
+
+    // The white copy carries no semantics: hidden from assistive tech and
+    // untabbable, so the nav is still announced and focused exactly once.
+    var overlay = nav.cloneNode(true);
+    overlay.classList.add('nav--over-red');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.removeAttribute('aria-label');
+    Array.prototype.forEach.call(overlay.querySelectorAll('a, button'), function (el) {
+      el.setAttribute('tabindex', '-1');
+    });
+    Array.prototype.forEach.call(overlay.querySelectorAll('[id]'), function (el) {
+      el.removeAttribute('id');
+    });
+    shell.appendChild(overlay);
+
+    var rects = [];
+    var queued = false;
+
+    function paint() {
+      queued = false;
+
+      var barBox = bar.getBoundingClientRect();
+      var shellBox = shell.getBoundingClientRect();
+      var used = 0;
+
+      for (var i = 0; i < reds.length; i++) {
+        var r = reds[i].getBoundingClientRect();
+        // only blocks actually crossing the bar's band
+        if (r.bottom <= barBox.top || r.top >= barBox.bottom) continue;
+        if (r.right <= shellBox.left || r.left >= shellBox.right) continue;
+
+        var rect = rects[used];
+        if (!rect) {
+          rect = document.createElementNS(NS, 'rect');
+          rects[used] = rect;
+          clip.appendChild(rect);
+        }
+        // coordinates are relative to the clipped element's own box
+        rect.setAttribute('x', r.left - shellBox.left);
+        rect.setAttribute('y', r.top - shellBox.top);
+        rect.setAttribute('width', r.width);
+        rect.setAttribute('height', r.height);
+        used++;
+      }
+
+      // park the leftovers instead of destroying them — scrolling churns this
+      for (var j = used; j < rects.length; j++) {
+        rects[j].setAttribute('width', 0);
+        rects[j].setAttribute('height', 0);
+      }
+    }
+
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(paint);
+    }
+
+    paint();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
   }
 
   /* ------------------------------------------------------- media reveals --- */
@@ -609,7 +774,12 @@
   }
 
   // Safety net: if the intro never starts for any reason, show the hero anyway.
-  var failsafe = window.setTimeout(reveal, 3000);
+  // Long enough to sit behind the whole load sequence — the intro is gated on
+  // it, and firing early would reveal the hero while the overlay is still up.
+  var failsafe = window.setTimeout(function () {
+    closeLoader();
+    reveal();
+  }, 6000);
 
   function start() {
     window.clearTimeout(failsafe);
@@ -645,11 +815,29 @@
     } catch (e) { /* copy stays visible, which is the end state */ }
   }
 
+  // The load sequence runs first and the hero intro starts the moment it is
+  // off — never both at once. If there is no overlay (the athlete page, or a
+  // visitor whose head script never ran) the intro just starts.
+  function boot() {
+    var loader = document.getElementById('loader');
+    if (!loader || !root.classList.contains('is-loading')) {
+      closeLoader();
+      start();
+      return;
+    }
+    try {
+      buildLoader(loader, start);
+    } catch (e) {
+      closeLoader();
+      start();
+    }
+  }
+
   // Wait for fonts before splitting — line breaks measured against a fallback
   // face would be wrong once the real face swaps in.
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(start).catch(start);
+    document.fonts.ready.then(boot).catch(boot);
   } else {
-    start();
+    boot();
   }
 })();

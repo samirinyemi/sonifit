@@ -21,6 +21,8 @@ Then open <http://localhost:5173>.
 | `styles.css` | All styling, tokens and breakpoints. |
 | `script.js` | Scrollbar measurement, hero intro timeline, reduced-motion handling. |
 | `assets/js/` | GSAP 3.13 + SplitText + ScrollTrigger, self-hosted. No CDN at runtime. |
+| `assets/js/slitscan.js` | The WebGL hover crossing on the collection cards. Self-contained, no GSAP. |
+| `tools/crop-products.sh` | Build step: re-cuts every product photograph to its frame's aspect ratio. |
 | `assets/` | Video, images, SVG exports. |
 
 ## Palette
@@ -104,6 +106,26 @@ The scattered sections use `--l / --t / --w / --h` inline custom properties
 holding the raw Figma coordinates — so a position change in Figma is a one-number
 edit in the HTML.
 
+## Loading screen
+
+One overlay, one sequence, and the hero intro does not start until it is gone —
+the two never overlap.
+
+| Time | What |
+| --- | --- |
+| `0.00` | The frame rises from below the fold at 72% size and settles dead centre at full size |
+| `0.25` | The two side lines fade up, 0.1s apart |
+| `0.20` | The counter runs **0 → 100** over 1.9s |
+| — | Every on-body photograph in the collection flips through the frame, stepped by the counter itself rather than its own timer, so the number and the images can never drift apart |
+| `2.10` | Type clears, the frame scales past 1 and goes |
+| `2.40` | The whole overlay leaves upward |
+
+`is-loading` is set on `<html>` in the `<head>`, before first paint, and the
+overlay only exists while it is there. Every exit from `script.js` clears it —
+no GSAP, reduced motion, a thrown tween, a missing node — and there is a 9s
+timer in the head as a last belt. There is no path that leaves a visitor behind
+a blank screen.
+
 ## Hero intro (GSAP)
 
 The wordmark is **inlined SVG**, one `<g class="wordmark__letter">` per letter,
@@ -178,6 +200,71 @@ Two different SplitText modes, for two different reasons:
   plain inline spans keep the wrapping identical to the unsplit text, and
   opacity animates fine on an inline box.
 
+## Collection hover — the slit-scan
+
+Each product card carries two photographs: the garment alone and the same
+garment on the body. The crossing between them is a shader, in
+`assets/js/slitscan.js`.
+
+The frame is cut into **14 vertical bands**. Band *N* opens once the crossing
+passes `N / 14 × 0.42`, then runs out the rest of the window — so the change
+sweeps left to right across the frame instead of happening all at once, and
+every band still lands exactly at the end rather than being left short. Inside
+each band the outgoing photograph slips vertically by `0.055` of the frame
+while the incoming one arrives from the opposite direction, and the direction
+alternates band to band, so it reads as interleaved strips rather than one
+wipe with a soft edge. An RGB channel split peaks at the halfway point of each
+band and resolves to exactly zero at both ends — `0.0035` in UV, small enough
+to read as press misregistration rather than glitch art. 900ms in, 700ms out.
+
+Nothing scales, lifts or shadows. The transition *is* the interaction; the
+composition, the grid and the captions stay where they are.
+
+Three decisions carry the implementation:
+
+**One canvas, one context — moved, not positioned.** There is a single WebGL
+context for the whole grid, and it is `appendChild`-ed into the frame of the
+card under the pointer. No coordinate maths, correct at every breakpoint, and
+eleven cards can never exhaust the browser's context budget. Moving to a second
+card detaches it from the first, which snaps back to its still photograph —
+the correct state for a card the pointer has left.
+
+**Strictly an upgrade, never a dependency.** The markup already crosses the two
+`<img>` elements with a plain CSS opacity transition. Only once a live context
+exists *and* its program has linked does `slitscan.js` set
+`[data-fx-mode="gl"]` on the grid, which is the flag that tells the stylesheet
+to stand down. No-JS, no-WebGL, touch and reduced-motion visitors all still get
+the second photograph. Keyboard focus keeps the CSS crossfade in every case —
+there is no pointer there to drive a shader. It is gated on
+`(hover: hover) and (pointer: fine)` and `prefers-reduced-motion: no-preference`,
+and a lost context drops the flag and hands the crossing straight back to CSS.
+
+**Hover is tracked synchronously.** A decode that resolves *after* the pointer
+has already left must not switch the effect on with nothing left to turn it
+off. `pointerenter` sets the flag before anything can await; the enter is
+re-checked against it on the other side of the decode. When both photographs
+are already decoded — the normal case, since you cannot hover what has not been
+painted — there is a synchronous fast path with no microtask at all.
+
+### The build step
+
+```bash
+site/tools/crop-products.sh
+```
+
+Re-cuts every product photograph from the untouched export in
+`../Collection images` to the exact aspect ratio of the frame it sits in, and
+writes it to `assets/products/`. The frame ratio is the same at every
+breakpoint — `--w * --u` by `--h * --u` above 1280, `aspect-ratio: --w / --h`
+below it — so one crop covers every viewport, and the frame sizes are read
+straight out of `index.html` so they cannot drift from the markup.
+
+That is what lets the shader sample a trivial 0-1 UV with no cover fit, and it
+leaves the markup as a plain `object-fit: cover`, which is exactly what the
+fallback needs anyway. **The product images are versioned with `?v=` for the
+same reason as the CSS and JS**: the filenames do not change when the crop
+does, and a cached 16:9 texture in a 4:3 frame would stretch.
+
 ## Custom cursor
 
 A red dot rides the pointer across both pages. Over a collection card it grows
@@ -223,8 +310,9 @@ content for the rest, the page wants to become data-driven (one JSON map, one
   falls back to Helvetica Neue, which is the same skeleton, so metrics are close
   but not identical. Drop the real webfont into `assets/` and the stack picks it
   up with no other change.
-- **Product hover.** The `_Hover` files shipped in `Collection images` are wired
-  up as a crossfade on hover/focus.
+- **Product hover.** See below — the `_Hover` files shipped in
+  `Collection images` cross over in a WebGL shader, with a CSS crossfade
+  underneath for everyone the shader does not serve.
 - **Contrast.** `#FF2D2D` on `#FFF5F5` measures **3.43:1**. That passes for large
   type but is under the 4.5:1 WCAG AA threshold for the 13px labels and 15px body
   copy. Left as designed — worth a decision before this goes anywhere real. A

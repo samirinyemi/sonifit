@@ -7,7 +7,7 @@
 <meta name="description" content="Twelve products. Built for the distance, not the photograph. A signature running collection by Soni Labs Studio.">
 <meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=18">
+<link rel="stylesheet" href="styles.css?v=19">
 <script>
   /* Set before first paint so the hero never flashes its finished state. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -17,9 +17,38 @@
      position on reload, which lands you mid-page and makes ScrollTrigger
      measure its start/end against a scrolled document. */
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  /* The loader only exists while this class is set. script.js clears it; if
+     the scripts never run it is never added, so the page cannot be left stuck
+     behind the overlay. The timer is a second belt for a hung load. */
+  document.documentElement.classList.add('is-loading');
+  window.setTimeout(function () {
+    document.documentElement.classList.remove('is-loading');
+  }, 9000);
 </script>
 </head>
 <body>
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader__side loader__side--left">Soni Labs Studio</div>
+
+  <div class="loader__box">
+      <img src="assets/products/1-22-short-hover.jpg?v=19" alt="" loading="eager">
+      <img src="assets/products/1500-bra-hover.jpg?v=19" alt="" loading="eager">
+      <img src="assets/products/dawn-half-zip-hover.jpg?v=19" alt="" loading="eager">
+      <img src="assets/products/escarpment-shell-hover.jpg?v=19" alt="" >
+      <img src="assets/products/heat-tee-hover.jpg?v=19" alt="" >
+      <img src="assets/products/lane-cap-hover.jpg?v=19" alt="" >
+      <img src="assets/products/lane-singlet-hover.jpg?v=19" alt="" >
+      <img src="assets/products/season-short-hover.jpg?v=19" alt="" >
+      <img src="assets/products/sightline-hover.jpg?v=19" alt="" >
+      <img src="assets/products/split-sock-hover.jpg?v=19" alt="" >
+      <img src="assets/products/the-straight-hover.jpg?v=19" alt="" >
+  </div>
+
+  <div class="loader__side loader__side--right">Everyone deserves a lane</div>
+
+  <div class="loader__count"><span id="loader-count">0</span></div>
+</div>
 
 <a class="skip-link" href="#collection">Skip to the collection</a>
 
@@ -130,7 +159,7 @@
   </section>
 
   <!-- ============================ CTA ============================ -->
-  <section class="cta" id="cta" data-nav="invert" data-node-id="48:1150" aria-labelledby="cta-title">
+  <section class="cta" id="cta" data-node-id="48:1150" aria-labelledby="cta-title">
     <img class="cta__bg" src="assets/img/cta-background.jpg" alt="" loading="lazy">
     <div class="cta__inner">
       <h2 class="cta__title" id="cta-title" data-node-id="48:1155">Everyone deserves a lane</h2>
@@ -151,7 +180,7 @@
           </ul>
         </div>
 
-        <a class="btn" href="#collection" data-node-id="48:1159">The Lane Shop</a>
+        <a class="btn" href="#collection" data-nav-red data-node-id="48:1159">The Lane Shop</a>
       </div>
     </div>
   </section>
@@ -174,9 +203,9 @@
       <div class="scatter scatter--products" data-node-id="48:1167">
 
         <article class="product" data-cursor="See More" style="--l:0;--t:0;--w:513;--h:468" data-node-id="48:1169">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/lane-singlet.jpg" alt="Lane Singlet" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/lane-singlet-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/lane-singlet.jpg?v=19" alt="Lane Singlet" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/lane-singlet-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Lane Singlet</span><span class="product__price">$49.99</span></div>
@@ -185,9 +214,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:1007;--t:27;--w:393;--h:312" data-node-id="48:1247">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/1500-bra.jpg" alt="1500 Bra" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/1500-bra-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/1500-bra.jpg?v=19" alt="1500 Bra" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/1500-bra-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>1500 Bra</span><span class="product__price">$49.99</span></div>
@@ -196,9 +225,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:615;--t:206;--w:335;--h:258" data-node-id="48:1239">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/1-22-short.jpg" alt="1.22 Short" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/1-22-short-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/1-22-short.jpg?v=19" alt="1.22 Short" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/1-22-short-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>1.22 Short</span><span class="product__price">$49.99</span></div>
@@ -207,9 +236,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:0;--t:655;--w:306;--h:247" data-node-id="48:1177">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/split-sock.jpg" alt="Split Sock" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/split-sock-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/split-sock.jpg?v=19" alt="Split Sock" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/split-sock-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Split Sock</span><span class="product__price">$49.99</span></div>
@@ -218,9 +247,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:417;--t:730;--w:317;--h:352" data-node-id="48:1185">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/season-short.jpg" alt="Season Short" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/season-short-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/season-short.jpg?v=19" alt="Season Short" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/season-short-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Season Short</span><span class="product__price">$49.99</span></div>
@@ -229,9 +258,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:888;--t:730;--w:512;--h:434" data-node-id="48:1193">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/sightline.jpg" alt="Sightline" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/sightline-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/sightline.jpg?v=19" alt="Sightline" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/sightline-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Sightline</span><span class="product__price">$49.99</span></div>
@@ -240,9 +269,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:493;--t:1412;--w:306;--h:395" data-node-id="48:1223">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/lane-cap.jpg" alt="Lane Cap" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/lane-cap-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/lane-cap.jpg?v=19" alt="Lane Cap" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/lane-cap-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Lane Cap</span><span class="product__price">$49.99</span></div>
@@ -251,9 +280,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:0;--t:1491;--w:306;--h:240" data-node-id="48:1231">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/dawn-half-zip.jpg" alt="Dawn Half-Zip" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/dawn-half-zip-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/dawn-half-zip.jpg?v=19" alt="Dawn Half-Zip" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/dawn-half-zip-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Dawn Half-Zip</span><span class="product__price">$49.99</span></div>
@@ -262,9 +291,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:1005;--t:1611;--w:328;--h:340" data-node-id="48:1201">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/the-straight.jpg" alt="The Straight" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/the-straight-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/the-straight.jpg?v=19" alt="The Straight" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/the-straight-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>The Straight</span><span class="product__price">$49.99</span></div>
@@ -273,9 +302,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:0;--t:2069;--w:689;--h:522" data-node-id="48:1209">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/escarpment-shell.jpg" alt="Escarpment Shell" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/escarpment-shell-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/escarpment-shell.jpg?v=19" alt="Escarpment Shell" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/escarpment-shell-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Escarpment Shell</span><span class="product__price">$49.99</span></div>
@@ -284,9 +313,9 @@
         </article>
 
         <article class="product" data-cursor="See More" style="--l:1065;--t:2340;--w:335;--h:279" data-node-id="48:1168">
-          <a class="product__media" href="#collection">
-            <img class="product__img" src="assets/products/heat-tee.jpg" alt="Heat Tee" loading="lazy">
-            <img class="product__img product__img--hover" src="assets/products/heat-tee-hover.jpg" alt="" aria-hidden="true" loading="lazy">
+          <a class="product__media" href="#collection" data-nav-red>
+            <img class="product__img" src="assets/products/heat-tee.jpg?v=19" alt="Heat Tee" loading="lazy">
+            <img class="product__img product__img--hover" src="assets/products/heat-tee-hover.jpg?v=19" alt="" aria-hidden="true" loading="lazy">
           </a>
           <div class="product__info">
             <div class="product__row"><span>Heat Tee</span><span class="product__price">$49.99</span></div>
@@ -347,7 +376,7 @@
 <script src="assets/js/gsap.min.js"></script>
 <script src="assets/js/SplitText.min.js"></script>
 <script src="assets/js/ScrollTrigger.min.js"></script>
-<script src="script.js?v=18"></script>
-<script src="assets/js/dissolve.js?v=18"></script>
+<script src="script.js?v=19"></script>
+<script src="assets/js/slitscan.js?v=19"></script>
 </body>
 </html>

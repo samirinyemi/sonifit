@@ -175,6 +175,97 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   width: calc(var(--w) * var(--u));
 }
 
+/* ============================== LOADER ================================== */
+
+/* Shown only while `.is-loading` is on the root, which an inline script in
+   <head> sets before first paint and script.js clears. If the scripts never
+   run, the class is never added and the loader is simply not there — the page
+   can never be left stuck behind it. */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  background: var(--bg);
+  color: var(--red);
+  align-items: center;
+  justify-content: center;
+  gap: calc(60 * var(--u));
+  padding: var(--gutter);
+  overflow: hidden;
+}
+
+.is-loading .loader { display: flex; }
+
+/* lock the page behind it */
+.is-loading,
+.is-loading body { overflow: hidden; }
+
+/* A square box, the same size whichever image is showing. It starts small and
+   low and travels to the middle of the screen, growing as it arrives. */
+.loader__box {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(38vh, 42vw, 340px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: rgba(255, 45, 45, 0.06);
+}
+
+.loader__box img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+
+.loader__box img.is-on { opacity: 1; }
+
+.loader__side {
+  flex: 0 0 auto;
+  width: calc(200 * var(--u));
+  min-width: 120px;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.loader__side--right { text-align: right; }
+
+.loader__count {
+  position: absolute;
+  left: var(--gutter);
+  bottom: calc(var(--gutter) - 0.18em);
+  font-weight: var(--w-bold);
+  font-size: max(64px, calc(200 * var(--u)));
+  line-height: 0.9;
+  letter-spacing: var(--track-display);
+}
+
+.loader__count::after { content: ""; }
+
+@media (max-width: 700px) {
+  .loader {
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .loader__side {
+    width: min(100%, 320px);
+    text-align: center;
+  }
+
+  .loader__side--right { text-align: center; }
+
+  .loader__box { width: min(52vw, 300px); }
+
+  .loader__count { font-size: clamp(56px, 22vw, 140px); }
+}
+
 /* ============================== HERO ==================================== */
 
 /* Figma height is 1044, but now that the frame scales past 1440 that would
@@ -238,14 +329,27 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 .nav-bar .nav { pointer-events: auto; }
 
-/* Red is the default and it stays red over the cream ground — no blending, so
-   it is exactly #FF2D2D, not a computed approximation of it.
-   Over the full-bleed red and dark imagery it flips to white.
-   `difference` was tried first and cannot do this: solving |source-backdrop|
-   for "red over red reads white" needs channel values above 1.0. Every blend
-   mode that fixes the red case breaks the cream one, so this is a state
-   switch rather than a composite. */
-.nav-bar.is-inverted { color: var(--white); }
+/* The bar is red at every scroll position — no blend mode, no second colour
+   on the element. Where it crosses a red block, this white copy is stacked
+   exactly on top and clipped to that block, so only the overlapping pixels
+   read white while the rest of the row stays red. */
+.nav-bar .shell { position: relative; }
+
+.nav--over-red {
+  position: absolute;
+  inset: 0;
+  color: var(--white);
+  pointer-events: none;
+  clip-path: url(#nav-red-clip);
+}
+
+/* the clip source is geometry only, never painted */
+.nav-clip {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
 
 /* The centre mark drops away the moment the page moves; the links stay at
    full strength. */
@@ -555,13 +659,16 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   background: rgba(255, 45, 45, 0.06);
 }
 
+/* The photographs are pre-cut to the frame ratio by tools/crop-products.sh, so
+   `cover` never actually has anything to crop — it is here for the odd
+   sub-pixel of rounding. */
 .product__img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.4s var(--ease), transform 0.7s var(--ease);
+  transition: opacity 0.4s var(--ease);
 }
 
 .product__img--hover { opacity: 0; }
@@ -569,23 +676,29 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 .product:hover .product__img--hover,
 .product__media:focus-visible .product__img--hover { opacity: 1; }
 
-/* The WebGL canvas paints the dissolve over the top of the media box. While
-   it is mounted the CSS crossfade underneath is silenced so the two are not
-   both running; if WebGL is unavailable the class is never added and the
-   crossfade above is exactly what you get. */
-.dissolve {
+/* --- the WebGL crossing -------------------------------------------------
+   assets/js/slitscan.js sets [data-fx-mode="gl"] on the grid only once a live
+   context exists and its program has linked. Until then — and forever, for
+   touch, reduced-motion and no-WebGL visitors — the rules above are the whole
+   interaction and the second photograph still arrives.
+
+   Under gl the shader owns the crossing, so hover stops revealing the second
+   <img>. Keyboard focus is left alone: there is no pointer to drive the
+   effect, so :focus-visible keeps the plain crossfade. */
+
+.product__fx {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
 }
 
-.product__media.is-gl .product__img--hover { opacity: 0; }
+[data-fx-mode="gl"] .product:hover .product__img--hover { opacity: 0; }
 
-/* No scale on hover for now — the dissolve carries the interaction on its own.
-   Add `transform: scale(1.03)` back here if it wants the extra push. */
+[data-fx-mode="gl"] .product__media:focus-visible .product__img--hover { opacity: 1; }
 
 .product__info {
   display: flex;
@@ -1147,6 +1260,5 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .athlete:hover .athlete__img img,
-  .product:hover .product__img { transform: none; }
+  .athlete:hover .athlete__img img { transform: none; }
 }
