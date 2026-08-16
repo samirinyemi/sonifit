@@ -238,10 +238,14 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 .nav-bar .nav { pointer-events: auto; }
 
-/* Over the hero it is red on footage. Once the bar clears the hero it is
-   sitting on the cream ground, where near-black reads far better than red —
-   3.43:1 against 17.9:1. */
-.nav-bar.is-over-page { color: var(--ink); }
+/* Red is the default and it stays red over the cream ground — no blending, so
+   it is exactly #FF2D2D, not a computed approximation of it.
+   Over the full-bleed red and dark imagery it flips to white.
+   `difference` was tried first and cannot do this: solving |source-backdrop|
+   for "red over red reads white" needs channel values above 1.0. Every blend
+   mode that fixes the red case breaks the cream one, so this is a state
+   switch rather than a composite. */
+.nav-bar.is-inverted { color: var(--white); }
 
 /* The centre mark drops away the moment the page moves; the links stay at
    full strength. */
@@ -565,8 +569,23 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 .product:hover .product__img--hover,
 .product__media:focus-visible .product__img--hover { opacity: 1; }
 
-.product:hover .product__img,
-.product__media:focus-visible .product__img { transform: scale(1.03); }
+/* The WebGL canvas paints the dissolve over the top of the media box. While
+   it is mounted the CSS crossfade underneath is silenced so the two are not
+   both running; if WebGL is unavailable the class is never added and the
+   crossfade above is exactly what you get. */
+.dissolve {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.product__media.is-gl .product__img--hover { opacity: 0; }
+
+/* No scale on hover for now — the dissolve carries the interaction on its own.
+   Add `transform: scale(1.03)` back here if it wants the extra push. */
 
 .product__info {
   display: flex;
@@ -797,7 +816,9 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 .ath-statement { margin-top: calc(107 * var(--u)); }
 
-.ath-statement--first { margin-top: calc(82 * var(--u)); }
+/* Extra breathing room under the collage — the name runs long and needs
+   clearance before the statement starts. */
+.ath-statement--first { margin-top: calc(82 * var(--u) + 100px); }
 
 .ath-statement__quote {
   margin: 0;

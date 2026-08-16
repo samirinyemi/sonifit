@@ -364,31 +364,30 @@
 
   /* ------------------------------------------------------------ sticky nav --- */
 
-  // Two independent states, because they answer two different questions.
+  // `is-scrolled` drops the centre mark once the page moves.
   //
-  // `is-scrolled` — has the page moved at all? Drops the centre mark. Fires
-  // almost immediately, which is what makes it feel responsive.
-  //
-  // `is-over-page` — is the bar still over the hero footage, or has it reached
-  // the cream ground? This one drives colour. It cannot share the first
-  // threshold: switching to near-black 40px into a 100vh hero would put dark
-  // text on dark video for the rest of the section.
+  // `is-inverted` turns the bar white while it overlaps a block flagged
+  // [data-nav="invert"] — the full-bleed red and dark imagery. Everywhere else
+  // it is plain red on cream. Done by hit-testing the bar against those blocks
+  // rather than by blending, because no blend mode can render red-on-red as
+  // white while leaving red-on-cream untouched.
   function buildNav() {
     var bar = document.querySelector('.nav-bar');
     if (!bar) return;
 
-    var dark = document.querySelector('.hero, .ath-hero');
+    var inverters = Array.prototype.slice.call(
+      document.querySelectorAll('[data-nav="invert"]')
+    );
 
     function update() {
       bar.classList.toggle('is-scrolled', window.scrollY > 40);
 
-      var overDark = false;
-      if (dark) {
-        // the bar sits at the top, so compare against the dark block's bottom
-        var edge = dark.getBoundingClientRect().bottom;
-        overDark = edge > bar.getBoundingClientRect().bottom;
-      }
-      bar.classList.toggle('is-over-page', !overDark);
+      var edge = bar.getBoundingClientRect().bottom;
+      var over = inverters.some(function (block) {
+        var r = block.getBoundingClientRect();
+        return r.top < edge && r.bottom > 0;
+      });
+      bar.classList.toggle('is-inverted', over);
     }
 
     update();
@@ -449,10 +448,20 @@
 
     gsap.matchMedia().add('(min-width: 1280px)', function () {
       var next = document.querySelector('.cta');
-      holdInPlace(title, {
+      var st = holdInPlace(title, {
         endTrigger: next || section,
         end: next ? 'top 20%' : 'bottom center'
       });
+
+      // Below the breakpoint matchMedia reverts this context and kills the
+      // trigger — but the y values are written from inside onUpdate, long
+      // after the context was recorded, so GSAP does not know to undo them.
+      // Without this the title is stranded at its last offset, a full 1387px
+      // down and completely out of sight.
+      return function () {
+        if (st) st.kill();
+        gsap.set(title, { clearProps: 'transform' });
+      };
     });
   }
 
@@ -493,9 +502,17 @@
       // dozen pixels taller and would start at a different scroll position.
       // Both copies share an offsetParent and an offsetTop, so they compute
       // the same start without needing to share a trigger element.
-      q('.ath__title').forEach(function (copy) {
-        holdInPlace(copy, { endTrigger: section, end: 'bottom center' });
+      var copies = q('.ath__title');
+      var holds = copies.map(function (copy) {
+        return holdInPlace(copy, { endTrigger: section, end: 'bottom center' });
       });
+
+      // Same reason as the home page: clear the offsets by hand when the
+      // breakpoint stops matching, or the names are left off-screen.
+      return function () {
+        holds.forEach(function (st) { if (st) st.kill(); });
+        gsap.set(copies, { clearProps: 'transform' });
+      };
     });
   }
 
