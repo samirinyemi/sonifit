@@ -799,9 +799,30 @@
 
     if (typeof gsap.matchMedia !== 'function') return;
 
-    gsap.matchMedia().add('(min-width: 1280px)', function () {
-      var depths = [-90, 70, -60, 100, -75];
+    // The collage drifts at five different rates as the section passes, which
+    // is what gives the hero its depth. It runs at every width — a laptop at
+    // 1280 with a scrollbar reports 1264, so gating this on the reflow
+    // breakpoint meant a good number of people saw a flat wall of pictures and
+    // no parallax at all.
+    //
+    // Below the breakpoint the collage stacks into a single column, so the
+    // travel is scaled back: the same drift that reads as depth against
+    // overlapping frames reads as pictures colliding in a stack.
+    gsap.matchMedia()
+      .add('(min-width: 1280px)', function () {
+        parallax([-90, 70, -60, 100, -75]);
+      })
+      .add('(max-width: 1279px)', function () {
+        // Below the breakpoint the collage is two packed columns, and pictures
+        // in the same column are only a few pixels apart. So the drift is set
+        // per column rather than per picture: 1/3/5 travel up together, 2/4
+        // travel down together, and the depth reads as the two columns moving
+        // against each other. Spreading the rates within a column instead
+        // closes those gaps to nothing and the pictures collide.
+        parallax([-30, 26, -26, 34, -28]);
+      });
 
+    function parallax(depths) {
       imgs.forEach(function (img, i) {
         gsap.to(img, {
           y: depths[i % depths.length],
@@ -809,7 +830,9 @@
           scrollTrigger: { trigger: section, start: 'top bottom', end: 'bottom top', scrub: true }
         });
       });
+    }
 
+    gsap.matchMedia().add('(min-width: 1280px)', function () {
       // Both copies of the name hold together — the solid one under the
       // photography and the stroke-only one above it — so the outline keeps
       // registering with the pictures as they move past. They share a single

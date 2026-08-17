@@ -207,7 +207,7 @@ All of it is ScrollTrigger. Two kinds, used deliberately:
 | What | Behaviour |
 | --- | --- |
 | The big uppercase statements | Words start at 18% opacity and light up in sequence, fully lit by the time the block sits mid-screen |
-| Collage photographs (athlete page) | Drift at five different rates as the section passes |
+| Collage photographs (athlete page) | Drift at five different rates as the section passes, at **every** width. Above 1280 the rates are per picture (−90 to +100), which is what gives the overlapping frames their depth. Below it the collage is two packed columns with only a few pixels between neighbours, so the drift is set per column instead — 1/3/5 travel up together, 2/4 down — and the depth reads as the columns moving against each other. Spreading the rates within a column there closes those gaps to nothing and the pictures collide |
 | The full-bleed plate | Opens from a small centred rectangle (`clip-path: inset(16% 24%)`) to full bleed, with the image easing from 1.18 to 1 |
 
 **Revealed** — the general case, and the only one that is not ScrollTrigger.
