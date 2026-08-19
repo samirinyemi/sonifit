@@ -79,9 +79,28 @@ footer mark still scales; say the word if it should match.)
 
 | Viewport | Behaviour |
 | --- | --- |
-| **≥ 1280px** | Full-bleed scaled composition. Section tops and heights stay in exact Figma proportion. Hero height is capped at `100svh` so the wordmark and its intro always land on the first screen. |
+| **≥ 1280px** | Full-bleed scaled composition. Section tops and heights stay in exact Figma proportion. The hero is the one exception: it is always exactly `100svh`, never the Figma height (see below). |
 | **≤ 1279px** | Scaling stops (`--u: 1px`). The two scattered canvases (Athletes, Collection) reflow into a packed two-column layout via CSS multi-column, and the hero fills the viewport. |
 | **≤ 560px** | Single column throughout, plus a portrait rebalance of the hero. |
+
+### The hero is always the whole screen
+
+`min-height: 100svh` on `.hero` and `.hero__inner`, at every width, full stop.
+
+It used to be `min(calc(1044 * var(--u)), 100svh)` — the Figma frame height
+capped at the viewport. But `--u` is derived from the viewport **width**, so
+`1044 * --u` is really 0.746 x the content width. On any window taller than it
+is wide, the width-derived term won and the hero came up short: 940px inside a
+1150px viewport, with a 210px band of the next section showing under a hero
+that is supposed to be the whole screen.
+
+`svh` rather than `vh` or `dvh`. On a phone `vh` is the *large* viewport, so
+the bottom-anchored composition sits behind the browser chrome on load; `dvh`
+re-runs the layout every time that chrome slides away. `svh` is the one that is
+stable and always visible. On desktop the three are identical.
+
+It stays `min-height` rather than `height` so a very short window can still
+grow the hero instead of clipping the wordmark.
 
 ### The hero on phones
 

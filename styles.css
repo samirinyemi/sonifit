@@ -294,12 +294,22 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 /* ============================== HERO ==================================== */
 
-/* Figma height is 1044, but now that the frame scales past 1440 that would
-   push the wordmark — and its intro — below the fold on a normal screen.
-   Capped at the viewport so the bottom-anchored composition always lands. */
+/* Always exactly the viewport, never the Figma height.
+
+   The frame height in Figma is 1044, but `--u` is derived from the viewport
+   *width*, so `1044 * --u` is really 0.746 x the content width. Capping the
+   two against each other meant that on any window taller than it is wide the
+   width-derived term won and the hero came up short — 940px inside a 1150px
+   viewport, a 210px band of the next section showing under a hero that is
+   supposed to be the whole screen.
+
+   `svh` rather than `vh` or `dvh`: on a phone `vh` is the *large* viewport, so
+   the bottom of the composition sits behind the browser chrome on load, and
+   `dvh` re-runs the layout every time that chrome slides away. `svh` is the
+   one that is stable and always visible. On desktop all three are identical. */
 .hero {
   position: relative;
-  min-height: min(calc(1044 * var(--u)), 100svh);
+  min-height: 100svh;
   overflow: hidden;
   background: var(--ink);
   color: var(--red);
@@ -323,7 +333,7 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 .hero__inner {
   position: relative;
   z-index: 1;
-  min-height: min(calc(1044 * var(--u)), 100svh);
+  min-height: 100svh;
   width: calc(100% - (2 * var(--gutter)));
   margin-inline: auto;
   /* 23, not the home frame's 28, so the nav sits at the same height as the
@@ -1008,9 +1018,6 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   }
 
   /* --- hero --- */
-
-  .hero,
-  .hero__inner { min-height: 100svh; }
 
   .hero__inner { padding-block: 24px 24px; gap: 32px; }
 
