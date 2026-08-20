@@ -526,6 +526,15 @@ photo covers the name, you see the outline — the effect in the design. The
 outline copy is `aria-hidden` and dropped entirely below 1280px, where the
 collage stacks and nothing overlaps.
 
+**The two copies must stay in exact register, always.** They animate as a
+single tween with no stagger, outside the general `[data-anim]` group: only the
+solid copy carries that attribute, so the outline was not animating at all and
+sat 22px off its twin for the whole entrance, and the group's `0.1` stagger
+would have separated them in time even once both were included. The intro's
+`clearProps` covers both copies too — the scroll hold writes `y` to each
+afterwards, and clearing one but not the other leaves them out of register for
+good. Verified at zero offset through the entrance and through the hold.
+
 **All five athlete cards link here.** Only Kipchoge has copy and photography in
 the Figma file, so the other four currently land on his page. When there is
 content for the rest, the page wants to become data-driven (one JSON map, one

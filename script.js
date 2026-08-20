@@ -285,7 +285,11 @@
         // Every animated element, not just the ones inside .hero — the nav now
         // lives in the fixed bar, and a leftover inline opacity there would
         // outrank the stylesheet rule that fades the mark out on scroll.
-        gsap.set(q('[data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
+        // Both name copies, not just the one with `data-anim` — the hold writes
+        // `y` to both afterwards, and clearing one and not the other leaves
+        // them permanently out of register on scroll.
+        gsap.set(q('[data-anim]').concat(q('.wordmark__letter')).concat(q('.ath__title')),
+          { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
         // Opacity only. Clearing the transform as well would wipe the `y` the
         // parallax scrubs onto these same frames.
@@ -315,13 +319,27 @@
     // Anything else marked for the intro — the athlete page title lands here,
     // so both pages share one entrance. The paragraphs are excluded: they are
     // already animating line by line above.
+    // The athlete name is set twice — a solid copy under the photography and a
+    // stroke-only copy above it — and the two have to stay in exact register or
+    // the outline reads as a printing error. They get their own step, outside
+    // `rest`, for two reasons: only the solid copy carries `data-anim` (so the
+    // outline was not animating at all, sitting 22px off its twin for the whole
+    // entrance), and `rest` staggers 0.1 apart, which would separate them in
+    // time even once both were included. One tween, no stagger, one motion.
+    var athTitles = q('.ath__title');
+
     var rest = q('[data-anim]').filter(function (el) {
-      return navItems.indexOf(el) < 0 && metaItems.indexOf(el) < 0 && paras.indexOf(el) < 0;
+      return navItems.indexOf(el) < 0 && metaItems.indexOf(el) < 0 &&
+        paras.indexOf(el) < 0 && athTitles.indexOf(el) < 0;
     });
 
     step(rest,
       { y: 22, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.85, stagger: 0.1 }, 0.2);
+
+    step(athTitles,
+      { y: 22, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.85, stagger: 0 }, 0.2);
 
     step(rule ? [rule] : [],
       { scaleX: 0 },
