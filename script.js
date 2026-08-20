@@ -257,6 +257,13 @@
     var paras = [blurb].concat(q('.ath__lede, .ath__note')).filter(Boolean);
     var lineTargets = [];
 
+    // The athlete collage. Each figure already has `overflow: hidden`, so the
+    // photograph inside can simply be moved: it climbs out from behind its own
+    // frame rather than fading, which is the same masked language as the hero
+    // lines and the wordmark. The counter-scale stops it reading as a flat
+    // slide — the picture settles as it arrives.
+    var athPhotos = q('.ath__img img');
+
     paras.forEach(function (p) {
       lineTargets = lineTargets.concat(intoLines(p));
       // The CSS pre-state hides these; GSAP drives them from here on.
@@ -281,6 +288,9 @@
         // outrank the stylesheet rule that fades the mark out on scroll.
         gsap.set(q('[data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
+        // Without this the inline transform outranks `.ath__img:hover img`
+        // and the photographs lose their hover scale for good.
+        gsap.set(q('.ath__img img'), { clearProps: 'all' });
         if (rule) gsap.set(rule, { clearProps: 'all' });
         scheduleRefresh();
       }
@@ -325,6 +335,21 @@
     // No opacity in the tween: the letters hold 100% throughout and are hidden
     // purely by the clip. The `from` sets opacity 1 inline, which releases them
     // from the CSS pre-state that stops a flash before GSAP takes over.
+    // After the name and the descriptions have started, so the page reads
+    // top-down: title, copy, then the photography filling in around it.
+    // `opacity: 1` in the *from*, as with the wordmark letters: it releases the
+    // CSS pre-state on the first frame, and from there the photograph is
+    // hidden purely by its frame's own clipping rather than by fading.
+    step(athPhotos,
+      { yPercent: 100, scale: 1.18, opacity: 1 },
+      {
+        yPercent: 0,
+        scale: 1,
+        duration: 1.05,
+        ease: 'power3.out',
+        stagger: { each: 0.09, from: 'start' }
+      }, 0.3);
+
     step(letters,
       { y: 300, opacity: 1 },
       {
@@ -801,10 +826,9 @@
 
     gsap.registerPlugin(window.ScrollTrigger);
 
-    // Reveal and parallax touch different properties of the same element, so
-    // they never fight. The reveal plays through on entry and rewinds on the
-    // way back up; the parallax below stays scroll-linked.
-    revealMedia(imgs, { rise: 0, duration: 0.8 });
+    // The collage photographs are revealed by the intro (they climb out from
+    // behind their own frames) and drifted by the parallax below. A third
+    // scroll-triggered fade on the same elements only fought the other two.
 
     if (typeof gsap.matchMedia !== 'function') return;
 
@@ -1017,22 +1041,26 @@
     var tl = gsap.timeline({
       onComplete: function () { window.location.href = href; }
     });
-    tl.to(overlay, { yPercent: 0, duration: 0.35, ease: 'power3.inOut' }, 0);
+    tl.to(overlay, { yPercent: 0, duration: 0.3, ease: 'power3.inOut' }, 0);
 
     // The same gesture as the hero — each letter rises out of the bottom edge
     // of its clipped box on `power4.out`, shuffled by `from: 'random'`, so the
     // mark assembles rather than appearing.
     //
-    // It starts at 0.38, *after* the sheet has landed. Overlapping the two
-    // was why the mark looked static: the letters were moving at the same
-    // moment the sheet carrying them was, so relative to it there was nothing
-    // to see. The sheet arrives, then the mark builds on it.
+    // The spread matters more than the duration here. On `power4.out` almost
+    // all of the travel happens in the first fifth of each tween, so with a
+    // 0.33s spread every letter had effectively landed within ~0.2s of the
+    // next and it read as one block appearing. 0.08 a step gives a 0.48s
+    // spread across seven letters — visibly one after another.
+    //
+    // Starting at 0.22 overlaps the last of the sheet's travel very slightly,
+    // which is what stops the mark feeling like it arrives long after the red.
     tl.to(letters, {
       yPercent: 0,
-      duration: 0.65,
+      duration: 0.55,
       ease: 'power4.out',
-      stagger: { each: 0.055, from: 'random' }
-    }, 0.38);
+      stagger: { each: 0.08, from: 'random' }
+    }, 0.22);
 
     tl.to({}, { duration: 0.08 });   // a beat with the mark held
 

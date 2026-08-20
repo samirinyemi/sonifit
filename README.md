@@ -159,8 +159,8 @@ halves across two documents:
 | --- | --- | --- |
 | `0.005` | leaving | Visible and parked below the fold — the click is answered in 5ms |
 | `0.00` | leaving | The sheet rises and covers the screen by 0.31s |
-| `0.38` | leaving | The seven letters rise out of the bottom edge on `power4.out`, shuffled — the hero's gesture exactly, only smaller and white |
-| `~1.44` | leaving | Navigation, while the screen is fully covered |
+| `0.22` | leaving | The seven letters rise out of the bottom edge on `power4.out`, shuffled — the hero's gesture exactly, only smaller and white |
+| `~1.33` | leaving | Navigation, while the screen is fully covered |
 | `0.00` | arriving | The document opens *already* covered — `is-arriving` is set in the `<head>`, before first paint |
 | `0.10` | arriving | The sheet wipes up and off, 0.5s |
 | `0.60` | arriving | **Then** the page plays its own entrance |
@@ -193,6 +193,43 @@ sheet lifts.
 A failsafe plays the held entrance at 2.5s regardless, so a wipe that never
 completes — a throttled background tab, a thrown handler — cannot leave the
 page sitting in its pre-intro state with everything hidden behind `js-anim`.
+
+### Making the mark read as letter-by-letter
+
+The stagger was mechanically present long before it was *visible*. On
+`power4.out` almost all of a tween's travel happens in its first fifth, so a
+0.33s spread across seven letters meant every one had effectively landed within
+~0.2s of the next: it looked like a block appearing. The fix is spread, not
+duration — `0.08` a step gives a 0.48s cascade. The check is how many letters
+have landed frame by frame; it should count up, not jump:
+
+```
+0,0,0,0,0,0,0,0,0,1,2,3,4,5,5,6,7,7,7,7,7
+```
+
+The letters are only ~49px tall, so small travel plus a fast ease hides a
+stagger that reads fine at hero scale.
+
+### The collage entrance
+
+Each `.ath__img` already has `overflow: hidden`, so the photograph inside is
+simply moved: it climbs out from behind its own frame, five of them cascading
+0.09 apart, with a 1.18 counter-scale so it settles rather than sliding flatly.
+No fade — the frame does the masking, exactly as the hero lines and the
+wordmark do.
+
+Two things this needs, both learned the hard way:
+
+- **The pre-state is `opacity`, never `transform`.** Same trap as the sheet
+  below: a CSS transform is read by GSAP as the start value and composed with
+  its own `yPercent`, so the tween finished at `translate(0px, 394.578px)` —
+  a full frame down and clipped away. The tween carries `opacity: 1` in its
+  *from*, releasing the CSS pre-state on the first frame.
+- **`transition: none` while `js-anim` is set.** These images carry a 0.7s
+  transform transition for the hover scale. Left on, every frame GSAP writes
+  is *also* being CSS-transitioned, and the two chase each other into sluggish,
+  unsteady motion. `clearProps` at the end of the intro hands the hover
+  transition straight back.
 
 ### Two bugs worth remembering
 

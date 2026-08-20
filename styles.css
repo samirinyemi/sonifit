@@ -493,6 +493,29 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
    show the two offset from each other. Hold it until the intro finishes —
    removing .js-anim reveals it, no JS involved. */
 .js-anim .ath__title--outline { opacity: 0; }
+
+/* The collage photographs wait behind their own frames until the intro moves
+   them out. Set here rather than by the script so there is no frame of the
+   finished collage before GSAP takes over; if the script never runs, `js-anim`
+   is never added and the pictures are simply in place.
+
+   The pre-state is `opacity`, never `transform` — the same pattern the
+   wordmark letters use. A transform here is read by GSAP as the element's
+   start value and composed with its own `yPercent`, so the tween ends at
+   `translate(0px, 394.578px)`: a full frame down, clipped away, invisible.
+   GSAP owns the transform end to end and releases the opacity on its first
+   frame.
+
+   `transition: none` matters too. These images carry a 0.7s transform
+   transition for the hover scale, and leaving it on means every frame GSAP
+   writes is *also* being CSS-transitioned — the tween and the transition
+   chase each other and the motion comes out sluggish and unsteady. GSAP
+   clears its inline styles when the intro ends, handing the hover transition
+   straight back. */
+.js-anim .ath__img img {
+  transition: none;
+  opacity: 0;
+}
 .js-anim .hero .rule { transform: scaleX(0); transform-origin: 0 50%; }
 
 /* ============================== ABOUT =================================== */
