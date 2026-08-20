@@ -1352,87 +1352,39 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 /* ============================ PAGE TRANSITION =========================== */
 
-/* A red sheet with the wordmark on it, covering the screen between pages.
-   It plays in halves: the outgoing page draws it up over itself and navigates
-   while fully covered, and the incoming page opens already covered and wipes
-   it off. The browser swaps documents behind the red, so there is never a
-   frame of the old page or a white flash of the new one.
+/* A fade, and nothing else.
 
-   Above the loader (200) — on the home page both can exist, and the sheet has
-   to cover everything including it. */
-.transition {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  /* Always in the render tree, never `display: none`.
-     A display-none element has no compositor layer, and `will-change` on it
-     does nothing — so the first click paid for layout and rasterisation of a
-     full-screen layer carrying a 5KB inline SVG, plus a relayout of an
-     11,000px document for the scroll lock. That is the pause between the click
-     and the sheet moving. Parked off-screen and hidden instead, the layer
-     already exists and the click only changes a transform. */
-  display: grid;
-  visibility: hidden;
-  pointer-events: none;
-  place-items: center;
-  background: var(--red);
-  /* NO transform here, deliberately. Parking the sheet below the fold in CSS
-     meant GSAP read that translate as the element's start value and composed
-     its own yPercent on top of it — `translate(0%, 99.92%) translate3d(0,
-     1274px, 0)` — so the sheet sat two viewports down and finished its cover
-     tween still a full viewport below the fold. It never entered the screen.
-     GSAP owns this transform end to end; the resting position is simply
-     `visibility: hidden`, which also keeps it out of hit-testing and paint. */
-  will-change: transform;
-}
+   The two halves are completely independent — there is no flag, no shared
+   state and no handoff between the documents. The leaving page fades itself
+   out to its own ground; the arriving page fades itself in from the same
+   ground, with a plain CSS animation that needs no script and always
+   completes. Nothing can be left half-done, and a direct visit gets exactly
+   the same gentle arrival as a click-through.
 
-/* Revealed only while a transition is actually running. `is-leaving` is set by
-   the click handler, `is-arriving` in the <head> of the destination — so with
-   no JS, or with the scripts failing, links are plain links and the sheet stays
-   parked below the fold where nobody can see it. */
-.is-leaving .transition,
-.is-arriving .transition { visibility: visible; }
+   Because both pages share `--bg`, the ground never changes across the
+   navigation: content dissolves out, the ground holds, content dissolves in.
 
-/* The incoming page opens with the sheet already over it — no transform is
-   exactly the covering position, so the first paint is red rather than a
-   half-built page, with no script needed to put it there. */
+   `both` keeps opacity at 0 through the animation's fill phase, so there is
+   no frame of fully-drawn page before it starts. */
+@media (prefers-reduced-motion: no-preference) {
+  body { animation: page-in 320ms var(--ease) both; }
 
-/* Nothing behind the sheet scrolls while it is up. */
-.is-leaving,
-.is-leaving body,
-.is-arriving,
-.is-arriving body { overflow: hidden; }
+  @keyframes page-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
 
-/* Small and centred — a quarter of the frame, never bigger than a phone's
-   width. The hero wordmark spans the full column; this one is a mark, so it
-   reads as a signature rather than a headline. */
-.transition__mark {
-  width: min(260px, 34vw);
-  overflow: hidden;   /* what makes the letters rise *out of* the sheet */
-}
+  /* Set by the click handler, which fades the page out and then navigates.
+     Nothing behind it should move while it goes.
 
-.transition__mark .tw {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1400 / 265;
-  fill: var(--white);
-}
-
-/* Pre-animation state, mirroring the hero intro: each letter waits below the
-   clipping edge. Only while leaving — on arrival the wordmark is already up. */
-.is-leaving .tw__letter { transform: translateY(110%); }
-
-@media (prefers-reduced-motion: reduce) {
-  /* No sheet at all: links navigate, and a page that is somehow mid-flight
-     still never traps anyone behind an overlay. */
-  .is-leaving .transition,
-  .is-arriving .transition { visibility: hidden; }
+     `animation: none` is load-bearing. A CSS animation wins over an inline
+     style in the cascade, so with `page-in` still filling at opacity 1 the
+     script's fade was written and then ignored — the page simply never faded.
+     Cancelling the arrival animation hands the property back. */
+  .is-leaving body { animation: none; }
 
   .is-leaving,
-  .is-leaving body,
-  .is-arriving,
-  .is-arriving body { overflow: visible; }
+  .is-leaving body { overflow: hidden; }
 }
 
 /* ------------------------------ motion ---------------------------------- */

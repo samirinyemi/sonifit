@@ -152,113 +152,39 @@ so a failsafe exit cannot leave a frozen video behind.
 
 ## Page transition
 
-Clicking an athlete card plays a red sheet with the wordmark on it, in two
-halves across two documents:
+A fade. Clicking an athlete card fades the page out over 280ms and navigates;
+every page fades itself in over 320ms with a CSS animation.
 
-| Time | Page | What |
-| --- | --- | --- |
-| `0.005` | leaving | Visible and parked below the fold — the click is answered in 5ms |
-| `0.00` | leaving | The sheet rises and covers the screen by 0.31s |
-| `0.22` | leaving | The seven letters rise out of the bottom edge on `power4.out`, shuffled — the hero's gesture exactly, only smaller and white |
-| `~1.33` | leaving | Navigation, while the screen is fully covered |
-| `0.00` | arriving | The document opens *already* covered — `is-arriving` is set in the `<head>`, before first paint |
-| `0.10` | arriving | The sheet wipes up and off, 0.5s |
-| `0.60` | arriving | **Then** the page plays its own entrance |
+**The two halves never talk to each other.** No flag, no `sessionStorage`, no
+class set in one document and read in the next — so there is no state that can
+go stale and no handoff that can half-happen. The worst case is a plain
+navigation, which is what a link does anyway. A direct visit gets the same
+gentle arrival as a click-through, because the arrival is just a CSS animation
+that always completes.
 
-About 1.6s end to end. The sheet only ever travels **upward** — up to cover, up
-again to uncover — so it reads as one continuous move rather than a cover that
-retreats the way it came. Because the browser swaps documents while the screen
-is covered, there is never a frame of the old page or a white flash of the new.
+Both pages share `--bg`, so the ground never changes across the navigation:
+content dissolves out, the ground holds, content dissolves in.
 
-The flag is a `sessionStorage` key rather than a URL parameter, so a shared or
-bookmarked link never opens behind a red screen. Any page that loads *without*
-the class clears the flag, so a stale one cannot make some unrelated navigation
-later open covered. A 4s failsafe in the head clears the class, and a
-`pageshow` handler clears everything on a bfcache restore — otherwise the back
-button lands on a red screen nothing will ever lift.
+Two details:
+
+- **`.is-leaving body { animation: none }` is load-bearing.** A CSS animation
+  beats an inline style in the cascade, so with `page-in` still filling at
+  opacity 1 the script's fade was written and then ignored — the page simply
+  never faded. Cancelling the arrival animation hands the property back.
+- **`pageshow`** clears everything on a bfcache restore. Without it the back
+  button lands on a page still faded to nothing.
 
 Only the athlete cards. The nav, the footer and the collection links are
-in-page or lateral moves; a full-screen wipe on those is noise, not
-punctuation.
+in-page or lateral moves; a fade on those is noise, not punctuation.
 
-### Arriving is not the same as loading
-
-The incoming page runs its **whole** build behind the sheet — splits,
-ScrollTrigger, and one explicit `ScrollTrigger.refresh()` — but its entrance
-timeline is built `paused` and held. The sheet wipes off, and only then does
-the page play its own reveal. Nothing that the visitor is meant to watch
-happens where they cannot see it, and nothing is caught half-finished when the
-sheet lifts.
-
-A failsafe plays the held entrance at 2.5s regardless, so a wipe that never
-completes — a throttled background tab, a thrown handler — cannot leave the
-page sitting in its pre-intro state with everything hidden behind `js-anim`.
-
-### Making the mark read as letter-by-letter
-
-The stagger was mechanically present long before it was *visible*. On
-`power4.out` almost all of a tween's travel happens in its first fifth, so a
-0.33s spread across seven letters meant every one had effectively landed within
-~0.2s of the next: it looked like a block appearing. The fix is spread, not
-duration — `0.08` a step gives a 0.48s cascade. The check is how many letters
-have landed frame by frame; it should count up, not jump:
-
-```
-0,0,0,0,0,0,0,0,0,1,2,3,4,5,5,6,7,7,7,7,7
-```
-
-The letters are only ~49px tall, so small travel plus a fast ease hides a
-stagger that reads fine at hero scale.
-
-### The collage entrance
-
-Each photograph rises 12% of its own height and fades from 0 to 1 as it goes,
-five of them cascading 0.09 apart. The **frame** moves, not the picture inside
-it — an earlier version moved only the picture, which left the frame sitting
-there with its own tinted ground showing as a red rectangle waiting for the
-photograph to arrive. That ground is gone from `.ath__img` entirely, and the
-pre-state (`opacity: 0`) is on the figure, so frame and picture are hidden and
-revealed as one thing.
-
-Two details that matter:
-
-- **The pre-state is `opacity`, never `transform`.** Same trap as the sheet
-  below: a CSS transform is read by GSAP as the element's start value and
-  composed with its own, so an earlier version of this tween finished at
-  `translate(0px, 394.578px)` — a full frame off target and clipped away.
-- **`yPercent`, not `y`.** The parallax scrubs `y` on these same frames. GSAP
-  keeps the two as separate components of one transform, so the entrance and
-  the drift compose instead of overwriting each other, and the intro's
-  `clearProps` is scoped to `opacity` alone so it cannot wipe the parallax.
-
-### Two bugs worth remembering
-
-**The sheet never entered the screen.** It was parked below the fold with
-`transform: translate3d(0, 100%, 0)` in CSS. GSAP read that as the element's
-start value and composed its own `yPercent` on top: `translate(0%, 99.92%)
-translate3d(0px, 1274px, 0px)` — two viewports down, finishing the cover tween
-still a full viewport below the fold. Clicking a card showed nothing at all for
-1.4s and then simply changed page. GSAP now owns that transform end to end and
-CSS sets no transform; the resting state is `visibility: hidden`.
-
-**`display: none` cost the first click.** With no box there is no compositor
-layer, and `will-change` on a display-none element does nothing — so the first
-click paid for layout and rasterisation of a full-screen layer carrying a 5KB
-inline SVG, plus a relayout of an 11,000px document for the scroll lock. The
-overlay now stays in the render tree, hidden and parked, so a click only
-changes a transform. Measured: visible at **5ms**, covering at **306ms**.
-
-The sheet is also parked *before* the class reveals it. With no transform the
-covering position is the default, so making it visible first and positioning it
-on GSAP's next tick flashes one frame of full-screen red.
-
-The arrival deliberately does **not** call `lenis.stop()`. `.is-arriving`
-already locks the page in CSS, and Lenis' stop adds a second lock
-(`lenis-stopped` on `<html>`, which its stylesheet turns into `overflow:
-clip`). That one only lifts when `lenis.start()` runs, so a timeline that never
-completes — a throttled background tab, a thrown handler — left the visitor on
-a page that could not be scrolled at all. One lock, held by the class the
-failsafe owns.
+An earlier version of this was a red sheet carrying the wordmark, handed
+between documents through a `sessionStorage` flag. It is worth recording why it
+went: every failure it had came from the handoff — a flag that outlived its
+navigation, a class set before first paint in one document and cleared in
+another, an entrance that had to be deferred until a sheet in a *different*
+document finished moving. The animation was never the hard part. Two
+independent halves that each work alone are worth more than one clever
+sequence with four ways to get stuck.
 
 ## Hero intro (GSAP)
 
