@@ -7,7 +7,13 @@
 <meta name="description" content="Twelve products. Built for the distance, not the photograph. A signature running collection by Soni Labs Studio.">
 <meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=37">
+
+<!-- The athlete page is one click away from five cards, and the transition
+     covers the screen for ~1.4s before navigating. Fetching it up front means
+     that time is spent on the animation rather than on a cold request, so the
+     red sheet lifts onto a page that is already there. -->
+<link rel="prefetch" href="athlete.html" as="document">
 <script>
   /* Set before first paint so the hero never flashes its finished state. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -407,7 +413,7 @@
 <script src="assets/js/SplitText.min.js"></script>
 <script src="assets/js/ScrollTrigger.min.js"></script>
 <script src="assets/js/lenis.min.js"></script>
-<script src="script.js?v=33"></script>
-<script src="assets/js/slitscan.js?v=33"></script>
+<script src="script.js?v=37"></script>
+<script src="assets/js/slitscan.js?v=37"></script>
 </body>
 </html>

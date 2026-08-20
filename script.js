@@ -246,16 +246,6 @@
   }
 
   function buildIntro() {
-    // Arriving through a transition: the sheet is over the page, so an intro
-    // would play where nobody can see it and then be caught half-finished the
-    // moment the sheet lifts — the name part-assembled, the outline copy
-    // popping in as `js-anim` clears. The page has already had its entrance;
-    // this one is the finished state, revealed.
-    if (arriving) {
-      reveal();
-      return;
-    }
-
     var letters = q('.wordmark__letter');
     var navItems = q('.nav [data-anim]');
     var metaItems = q('.hero__meta [data-anim]');
@@ -275,6 +265,11 @@
 
     var tl = gsap.timeline({
       defaults: { ease: 'power3.out' },
+      // Arriving through a transition: built now, so the splits and the
+      // measuring all happen behind the sheet, but held until the sheet is
+      // gone. The page's entrance belongs to the page — playing it under the
+      // red means it is half over by the time anyone can see it.
+      paused: arriving,
       onComplete: function () {
         // Give the paragraphs their original markup back so they re-wrap
         // cleanly on resize, and hand every element back to the stylesheet.
@@ -582,16 +577,20 @@
 
     // A refresh that runs while the browser has not yet clamped the scroll
     // position — the frame after a resize shortens the document — measures
-    // every position short by the overshoot, and `start` comes back negative.
-    // Progress then reads as 1 before you have scrolled at all, and the title
-    // is written a full section-height down: off screen, permanently, with
-    // nothing left to trigger a correction.
+    // every position short by the overshoot. The whole range then lands *above*
+    // the top of the document, progress reads as 1 before you have scrolled at
+    // all, and the title is written a full section-height down: off screen,
+    // permanently, with nothing left to trigger a correction.
     //
-    // So an impossible measurement is not used. The element keeps its natural
-    // position (the design's own baseline, always readable) and one more
-    // refresh is asked for once the browser has settled.
+    // The test for that is `end <= 0`, not `start < 0`. A negative start on its
+    // own is ordinary and correct: it means the element is near the top of the
+    // document and the hold is already slightly engaged at scroll zero, which
+    // is exactly the case for the athlete name (start -57). Guarding on it
+    // snapped the title back to zero on every update and asked for a refresh
+    // that re-ran the same check — eight rounds of measure, snap, re-measure.
+    // That is a shake, not a fix.
     function apply(self) {
-      if (self.start < 0 || self.end <= self.start) {
+      if (self.end <= 0 || self.end <= self.start) {
         gsap.set(el, { y: 0 });
         scheduleRemeasure();
         return;
@@ -942,6 +941,9 @@
   var leaving = false;
   // Captured once, because revealArrival clears the class when it finishes.
   var arriving = root.classList.contains('is-arriving');
+  // The incoming page's entrance, built behind the sheet and held until it is
+  // off. Played by revealArrival, or by its failsafe.
+  var pendingIntro = null;
 
   function flagTransition(on) {
     try {
@@ -999,30 +1001,40 @@
     leaving = true;
 
     flagTransition(true);
-    root.classList.add('is-leaving');
-    if (lenis) lenis.stop();
 
     var letters = q('.tw__letter', overlay);
+
+    // Park the sheet and the letters BEFORE the class makes them visible.
+    // With no transform the sheet is already in its covering position, so
+    // revealing it first and positioning it on GSAP's next tick shows one
+    // frame of full-screen red before it drops away to rise again.
+    gsap.set(overlay, { yPercent: 100 });
+    gsap.set(letters, { yPercent: 110 });
+
+    root.classList.add('is-leaving');
+    if (lenis) lenis.stop();
 
     var tl = gsap.timeline({
       onComplete: function () { window.location.href = href; }
     });
+    tl.to(overlay, { yPercent: 0, duration: 0.35, ease: 'power3.inOut' }, 0);
 
-    tl.set(overlay, { yPercent: 100 });
-    tl.to(overlay, { yPercent: 0, duration: 0.4, ease: 'power3.inOut' }, 0);
+    // The same gesture as the hero — each letter rises out of the bottom edge
+    // of its clipped box on `power4.out`, shuffled by `from: 'random'`, so the
+    // mark assembles rather than appearing.
+    //
+    // It starts at 0.38, *after* the sheet has landed. Overlapping the two
+    // was why the mark looked static: the letters were moving at the same
+    // moment the sheet carrying them was, so relative to it there was nothing
+    // to see. The sheet arrives, then the mark builds on it.
+    tl.to(letters, {
+      yPercent: 0,
+      duration: 0.65,
+      ease: 'power4.out',
+      stagger: { each: 0.055, from: 'random' }
+    }, 0.38);
 
-    // The same gesture as the hero: each letter rises out of the bottom edge,
-    // in a shuffled order, so the mark assembles rather than appearing.
-    tl.fromTo(letters,
-      { yPercent: 110 },
-      {
-        yPercent: 0,
-        duration: 0.45,
-        ease: 'power3.out',
-        stagger: { each: 0.035, from: 'random' }
-      }, 0.25);
-
-    tl.to({}, { duration: 0.1 });   // a beat with the mark held
+    tl.to({}, { duration: 0.08 });   // a beat with the mark held
 
     // If navigation is somehow refused, the sheet must not be left up.
     window.setTimeout(function () {
@@ -1053,10 +1065,24 @@
       onComplete: function () {
         root.classList.remove('is-arriving');
         flagTransition(false);
+        releaseIntro();
       }
     })
       .set(overlay, { yPercent: 0 })
       .to(overlay, { yPercent: -100, duration: 0.5, ease: 'power3.inOut' }, 0.1);
+
+    // If the wipe never completes — a throttled background tab, a thrown
+    // handler — the page must not be left sitting in its pre-intro state with
+    // everything hidden behind `js-anim`.
+    window.setTimeout(releaseIntro, 2500);
+  }
+
+  // Plays the held entrance exactly once, whoever gets here first.
+  function releaseIntro() {
+    if (!pendingIntro) return;
+    var tl = pendingIntro;
+    pendingIntro = null;
+    tl.play();
   }
 
   /* ---------------------------------------------------------- scroll reveal */
@@ -1204,7 +1230,7 @@
     // reveals fire in the wrong places.
     jumpToTop();
     try {
-      buildIntro();
+      pendingIntro = buildIntro();
     } catch (e) {
       reveal();
     }

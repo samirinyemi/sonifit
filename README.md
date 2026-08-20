@@ -157,11 +157,13 @@ halves across two documents:
 
 | Time | Page | What |
 | --- | --- | --- |
-| `0.00` | leaving | The sheet rises from below the fold and covers the screen, 0.4s |
-| `0.25` | leaving | The seven letters rise out of the bottom edge in shuffled order — the same gesture as the hero |
-| `~1.0` | leaving | Navigation, while the screen is fully covered |
+| `0.005` | leaving | Visible and parked below the fold — the click is answered in 5ms |
+| `0.00` | leaving | The sheet rises and covers the screen by 0.31s |
+| `0.38` | leaving | The seven letters rise out of the bottom edge on `power4.out`, shuffled — the hero's gesture exactly, only smaller and white |
+| `~1.44` | leaving | Navigation, while the screen is fully covered |
 | `0.00` | arriving | The document opens *already* covered — `is-arriving` is set in the `<head>`, before first paint |
 | `0.10` | arriving | The sheet wipes up and off, 0.5s |
+| `0.60` | arriving | **Then** the page plays its own entrance |
 
 About 1.6s end to end. The sheet only ever travels **upward** — up to cover, up
 again to uncover — so it reads as one continuous move rather than a cover that
@@ -181,17 +183,37 @@ punctuation.
 
 ### Arriving is not the same as loading
 
-The incoming page runs its **whole** build behind the sheet — intro, splits,
-ScrollTrigger, and one explicit `ScrollTrigger.refresh()` — and only then wipes
-off. What is revealed is a settled composition, not a page still assembling
-itself.
+The incoming page runs its **whole** build behind the sheet — splits,
+ScrollTrigger, and one explicit `ScrollTrigger.refresh()` — but its entrance
+timeline is built `paused` and held. The sheet wipes off, and only then does
+the page play its own reveal. Nothing that the visitor is meant to watch
+happens where they cannot see it, and nothing is caught half-finished when the
+sheet lifts.
 
-The hero intro is *skipped* on an arrival (`buildIntro` returns early and just
-reveals). Running it meant it played where nobody could see it and then got
-caught half-finished the moment the sheet lifted: the name part-assembled, the
-outline copy popping in as `js-anim` cleared, and a layout shift when the
-SplitText revert triggered a refresh. Three jumps in the first second. The page
-has already had its entrance — the sheet *is* the entrance.
+A failsafe plays the held entrance at 2.5s regardless, so a wipe that never
+completes — a throttled background tab, a thrown handler — cannot leave the
+page sitting in its pre-intro state with everything hidden behind `js-anim`.
+
+### Two bugs worth remembering
+
+**The sheet never entered the screen.** It was parked below the fold with
+`transform: translate3d(0, 100%, 0)` in CSS. GSAP read that as the element's
+start value and composed its own `yPercent` on top: `translate(0%, 99.92%)
+translate3d(0px, 1274px, 0px)` — two viewports down, finishing the cover tween
+still a full viewport below the fold. Clicking a card showed nothing at all for
+1.4s and then simply changed page. GSAP now owns that transform end to end and
+CSS sets no transform; the resting state is `visibility: hidden`.
+
+**`display: none` cost the first click.** With no box there is no compositor
+layer, and `will-change` on a display-none element does nothing — so the first
+click paid for layout and rasterisation of a full-screen layer carrying a 5KB
+inline SVG, plus a relayout of an 11,000px document for the scroll lock. The
+overlay now stays in the render tree, hidden and parked, so a click only
+changes a transform. Measured: visible at **5ms**, covering at **306ms**.
+
+The sheet is also parked *before* the class reveals it. With no transform the
+covering position is the default, so making it visible first and positioning it
+on GSAP's next tick flashes one frame of full-screen red.
 
 The arrival deliberately does **not** call `lenis.stop()`. `.is-arriving`
 already locks the page in CSS, and Lenis' stop adds a second lock

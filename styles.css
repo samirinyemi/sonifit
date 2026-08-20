@@ -1350,26 +1350,38 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   position: fixed;
   inset: 0;
   z-index: 300;
-  display: none;
+  /* Always in the render tree, never `display: none`.
+     A display-none element has no compositor layer, and `will-change` on it
+     does nothing — so the first click paid for layout and rasterisation of a
+     full-screen layer carrying a 5KB inline SVG, plus a relayout of an
+     11,000px document for the scroll lock. That is the pause between the click
+     and the sheet moving. Parked off-screen and hidden instead, the layer
+     already exists and the click only changes a transform. */
+  display: grid;
+  visibility: hidden;
+  pointer-events: none;
   place-items: center;
   background: var(--red);
-  /* Parked below the fold. The sheet always travels up: up to cover on the
-     way out, up again to uncover on the way in — one continuous direction
-     through the whole transition rather than a cover that retreats the way it
-     came. */
-  transform: translate3d(0, 100%, 0);
+  /* NO transform here, deliberately. Parking the sheet below the fold in CSS
+     meant GSAP read that translate as the element's start value and composed
+     its own yPercent on top of it — `translate(0%, 99.92%) translate3d(0,
+     1274px, 0)` — so the sheet sat two viewports down and finished its cover
+     tween still a full viewport below the fold. It never entered the screen.
+     GSAP owns this transform end to end; the resting position is simply
+     `visibility: hidden`, which also keeps it out of hit-testing and paint. */
   will-change: transform;
 }
 
-/* Shown only while a transition is actually running. `is-leaving` is set by
+/* Revealed only while a transition is actually running. `is-leaving` is set by
    the click handler, `is-arriving` in the <head> of the destination — so with
-   no JS, or with the scripts failing, links are plain links. */
+   no JS, or with the scripts failing, links are plain links and the sheet stays
+   parked below the fold where nobody can see it. */
 .is-leaving .transition,
-.is-arriving .transition { display: grid; }
+.is-arriving .transition { visibility: visible; }
 
-/* The incoming page opens with the sheet already over it, so the first paint
-   is red rather than a half-built page. */
-.is-arriving .transition { transform: none; }
+/* The incoming page opens with the sheet already over it — no transform is
+   exactly the covering position, so the first paint is red rather than a
+   half-built page, with no script needed to put it there. */
 
 /* Nothing behind the sheet scrolls while it is up. */
 .is-leaving,
@@ -1381,7 +1393,7 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
    width. The hero wordmark spans the full column; this one is a mark, so it
    reads as a signature rather than a headline. */
 .transition__mark {
-  width: min(360px, 42vw);
+  width: min(260px, 34vw);
   overflow: hidden;   /* what makes the letters rise *out of* the sheet */
 }
 
@@ -1401,7 +1413,7 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   /* No sheet at all: links navigate, and a page that is somehow mid-flight
      still never traps anyone behind an overlay. */
   .is-leaving .transition,
-  .is-arriving .transition { display: none; }
+  .is-arriving .transition { visibility: hidden; }
 
   .is-leaving,
   .is-leaving body,
