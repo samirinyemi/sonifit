@@ -1336,6 +1336,79 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
   }
 }
 
+/* ============================ PAGE TRANSITION =========================== */
+
+/* A red sheet with the wordmark on it, covering the screen between pages.
+   It plays in halves: the outgoing page draws it up over itself and navigates
+   while fully covered, and the incoming page opens already covered and wipes
+   it off. The browser swaps documents behind the red, so there is never a
+   frame of the old page or a white flash of the new one.
+
+   Above the loader (200) — on the home page both can exist, and the sheet has
+   to cover everything including it. */
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: none;
+  place-items: center;
+  background: var(--red);
+  /* Parked below the fold. The sheet always travels up: up to cover on the
+     way out, up again to uncover on the way in — one continuous direction
+     through the whole transition rather than a cover that retreats the way it
+     came. */
+  transform: translate3d(0, 100%, 0);
+  will-change: transform;
+}
+
+/* Shown only while a transition is actually running. `is-leaving` is set by
+   the click handler, `is-arriving` in the <head> of the destination — so with
+   no JS, or with the scripts failing, links are plain links. */
+.is-leaving .transition,
+.is-arriving .transition { display: grid; }
+
+/* The incoming page opens with the sheet already over it, so the first paint
+   is red rather than a half-built page. */
+.is-arriving .transition { transform: none; }
+
+/* Nothing behind the sheet scrolls while it is up. */
+.is-leaving,
+.is-leaving body,
+.is-arriving,
+.is-arriving body { overflow: hidden; }
+
+/* Small and centred — a quarter of the frame, never bigger than a phone's
+   width. The hero wordmark spans the full column; this one is a mark, so it
+   reads as a signature rather than a headline. */
+.transition__mark {
+  width: min(360px, 42vw);
+  overflow: hidden;   /* what makes the letters rise *out of* the sheet */
+}
+
+.transition__mark .tw {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1400 / 265;
+  fill: var(--white);
+}
+
+/* Pre-animation state, mirroring the hero intro: each letter waits below the
+   clipping edge. Only while leaving — on arrival the wordmark is already up. */
+.is-leaving .tw__letter { transform: translateY(110%); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* No sheet at all: links navigate, and a page that is somehow mid-flight
+     still never traps anyone behind an overlay. */
+  .is-leaving .transition,
+  .is-arriving .transition { display: none; }
+
+  .is-leaving,
+  .is-leaving body,
+  .is-arriving,
+  .is-arriving body { overflow: visible; }
+}
+
 /* ------------------------------ motion ---------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

@@ -246,6 +246,16 @@
   }
 
   function buildIntro() {
+    // Arriving through a transition: the sheet is over the page, so an intro
+    // would play where nobody can see it and then be caught half-finished the
+    // moment the sheet lifts — the name part-assembled, the outline copy
+    // popping in as `js-anim` clears. The page has already had its entrance;
+    // this one is the finished state, revealed.
+    if (arriving) {
+      reveal();
+      return;
+    }
+
     var letters = q('.wordmark__letter');
     var navItems = q('.nav [data-anim]');
     var metaItems = q('.hero__meta [data-anim]');
@@ -913,6 +923,142 @@
     }
   }
 
+  /* ------------------------------------------------------- page transition */
+
+  // A red sheet with the wordmark on it, between pages.
+  //
+  // It plays in two halves across two documents. The outgoing page draws the
+  // sheet up over itself, animates the mark in, and only then navigates — so
+  // the browser swaps documents while the screen is fully covered. The
+  // incoming page opens already covered (a flag in sessionStorage, read by an
+  // inline script in its <head> before first paint) and wipes the sheet off.
+  // Neither a frame of the old page nor a white flash of the new one is ever
+  // visible.
+  //
+  // The sheet only ever travels upward — up to cover, up again to uncover —
+  // so the whole thing reads as one continuous move rather than a cover that
+  // retreats the way it came.
+  var TRANSITION_KEY = 'sonifit:transition';
+  var leaving = false;
+  // Captured once, because revealArrival clears the class when it finishes.
+  var arriving = root.classList.contains('is-arriving');
+
+  function flagTransition(on) {
+    try {
+      if (on) sessionStorage.setItem(TRANSITION_KEY, '1');
+      else sessionStorage.removeItem(TRANSITION_KEY);
+    } catch (e) { /* private mode — the transition just degrades to a jump */ }
+  }
+
+  function buildTransitions() {
+    var overlay = document.getElementById('transition');
+    if (!overlay) return;
+
+    // Landed without the sheet — a direct visit, a reload, or a document whose
+    // <head> gate never ran. Clear the flag rather than leaving it set for some
+    // unrelated navigation later to open behind a red screen. (The arrival
+    // itself is played at the end of start(), once the page is built.)
+    if (!arriving) flagTransition(false);
+
+    // Only the athlete cards. The nav, the footer and the eleven collection
+    // links are in-page or lateral moves; a full-screen wipe on those would be
+    // noise, not punctuation.
+    q('.athlete__link').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.button !== 0) return;
+        // Let the browser handle open-in-new-tab, downloads and the rest.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+        var href = link.getAttribute('href');
+        if (!href || href.charAt(0) === '#') return;
+        if (link.target && link.target !== '_self') return;
+
+        e.preventDefault();
+        playLeave(overlay, href);
+      });
+    });
+
+    // Coming back through the bfcache restores the DOM exactly as it was left
+    // — including the sheet, mid-transition, covering the page. Without this
+    // the back button lands on a red screen that nothing will ever clear.
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      leaving = false;
+      root.classList.remove('is-leaving', 'is-arriving');
+      gsap.set(overlay, { clearProps: 'transform' });
+      gsap.set(q('.tw__letter', overlay), { clearProps: 'transform' });
+      flagTransition(false);
+      if (lenis) lenis.start();
+    });
+  }
+
+  // Outgoing half. Budgeted at about a second: long enough for the mark to
+  // land and be read, short enough that it never feels like waiting.
+  function playLeave(overlay, href) {
+    if (leaving) return;
+    leaving = true;
+
+    flagTransition(true);
+    root.classList.add('is-leaving');
+    if (lenis) lenis.stop();
+
+    var letters = q('.tw__letter', overlay);
+
+    var tl = gsap.timeline({
+      onComplete: function () { window.location.href = href; }
+    });
+
+    tl.set(overlay, { yPercent: 100 });
+    tl.to(overlay, { yPercent: 0, duration: 0.4, ease: 'power3.inOut' }, 0);
+
+    // The same gesture as the hero: each letter rises out of the bottom edge,
+    // in a shuffled order, so the mark assembles rather than appearing.
+    tl.fromTo(letters,
+      { yPercent: 110 },
+      {
+        yPercent: 0,
+        duration: 0.45,
+        ease: 'power3.out',
+        stagger: { each: 0.035, from: 'random' }
+      }, 0.25);
+
+    tl.to({}, { duration: 0.1 });   // a beat with the mark held
+
+    // If navigation is somehow refused, the sheet must not be left up.
+    window.setTimeout(function () {
+      if (!leaving) return;
+      leaving = false;
+      root.classList.remove('is-leaving');
+      flagTransition(false);
+      if (lenis) lenis.start();
+    }, 4000);
+  }
+
+  // Incoming half. The sheet is already covering; lift it off.
+  function revealArrival() {
+    var overlay = document.getElementById('transition');
+    if (!overlay) {
+      root.classList.remove('is-arriving');
+      flagTransition(false);
+      return;
+    }
+    // Deliberately NOT lenis.stop() here. `.is-arriving` already locks the page
+    // in CSS, and Lenis' own stop adds a second lock — it puts `lenis-stopped`
+    // on <html>, which its stylesheet turns into `overflow: clip`. That lock
+    // only lifts when lenis.start() runs, so if this timeline never completes
+    // (a background tab throttling the ticker, a thrown handler) the head's
+    // failsafe clears the class and the visitor is left on a page that cannot
+    // be scrolled at all. One lock, held by the class that the failsafe owns.
+    gsap.timeline({
+      onComplete: function () {
+        root.classList.remove('is-arriving');
+        flagTransition(false);
+      }
+    })
+      .set(overlay, { yPercent: 0 })
+      .to(overlay, { yPercent: -100, duration: 0.5, ease: 'power3.inOut' }, 0.1);
+  }
+
   /* ---------------------------------------------------------- scroll reveal */
 
   // One reveal, reused for every block that has no motion of its own.
@@ -1045,6 +1191,12 @@
   function start() {
     window.clearTimeout(failsafe);
 
+    // First: it owns the sheet the incoming page opens behind, and the click
+    // handlers that put it there on the way out.
+    try {
+      buildTransitions();
+    } catch (e) { /* links stay plain links, which is the fallback */ }
+
     // Land at the top before anything is measured. Some browsers restore the
     // previous scroll position after load even with scrollRestoration set to
     // manual, and ScrollTrigger would then compute every start/end against a
@@ -1077,6 +1229,26 @@
     try {
       buildReveals();
     } catch (e) { /* every block is already in its finished state */ }
+
+    // Last, and only on an arrival. Everything above ran behind the red sheet,
+    // so the page is fully built and measured before a pixel of it is shown —
+    // one settled composition is revealed rather than a page still assembling
+    // itself. The refresh is deliberate: SplitText reverts and the intro's
+    // cleared inline styles both change layout, and ScrollTrigger has to
+    // remeasure against the final one. Behind the sheet that costs nothing;
+    // in front of it, it is a visible jump.
+    if (arriving) {
+      try {
+        if (typeof window.ScrollTrigger !== 'undefined') window.ScrollTrigger.refresh();
+      } catch (e) { /* measured well enough */ }
+      try {
+        revealArrival();
+      } catch (e) {
+        root.classList.remove('is-arriving');
+        flagTransition(false);
+        if (lenis) lenis.start();
+      }
+    }
   }
 
   // The load sequence runs first and the hero intro starts the moment it is

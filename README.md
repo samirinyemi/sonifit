@@ -150,6 +150,57 @@ when the overlay starts moving — nobody watches three seconds of a showreel
 from behind a loading screen. Every path that dismisses the overlay starts it,
 so a failsafe exit cannot leave a frozen video behind.
 
+## Page transition
+
+Clicking an athlete card plays a red sheet with the wordmark on it, in two
+halves across two documents:
+
+| Time | Page | What |
+| --- | --- | --- |
+| `0.00` | leaving | The sheet rises from below the fold and covers the screen, 0.4s |
+| `0.25` | leaving | The seven letters rise out of the bottom edge in shuffled order — the same gesture as the hero |
+| `~1.0` | leaving | Navigation, while the screen is fully covered |
+| `0.00` | arriving | The document opens *already* covered — `is-arriving` is set in the `<head>`, before first paint |
+| `0.10` | arriving | The sheet wipes up and off, 0.5s |
+
+About 1.6s end to end. The sheet only ever travels **upward** — up to cover, up
+again to uncover — so it reads as one continuous move rather than a cover that
+retreats the way it came. Because the browser swaps documents while the screen
+is covered, there is never a frame of the old page or a white flash of the new.
+
+The flag is a `sessionStorage` key rather than a URL parameter, so a shared or
+bookmarked link never opens behind a red screen. Any page that loads *without*
+the class clears the flag, so a stale one cannot make some unrelated navigation
+later open covered. A 4s failsafe in the head clears the class, and a
+`pageshow` handler clears everything on a bfcache restore — otherwise the back
+button lands on a red screen nothing will ever lift.
+
+Only the athlete cards. The nav, the footer and the collection links are
+in-page or lateral moves; a full-screen wipe on those is noise, not
+punctuation.
+
+### Arriving is not the same as loading
+
+The incoming page runs its **whole** build behind the sheet — intro, splits,
+ScrollTrigger, and one explicit `ScrollTrigger.refresh()` — and only then wipes
+off. What is revealed is a settled composition, not a page still assembling
+itself.
+
+The hero intro is *skipped* on an arrival (`buildIntro` returns early and just
+reveals). Running it meant it played where nobody could see it and then got
+caught half-finished the moment the sheet lifted: the name part-assembled, the
+outline copy popping in as `js-anim` cleared, and a layout shift when the
+SplitText revert triggered a refresh. Three jumps in the first second. The page
+has already had its entrance — the sheet *is* the entrance.
+
+The arrival deliberately does **not** call `lenis.stop()`. `.is-arriving`
+already locks the page in CSS, and Lenis' stop adds a second lock
+(`lenis-stopped` on `<html>`, which its stylesheet turns into `overflow:
+clip`). That one only lifts when `lenis.start()` runs, so a timeline that never
+completes — a throttled background tab, a thrown handler — left the visitor on
+a page that could not be scrolled at all. One lock, held by the class the
+failsafe owns.
+
 ## Hero intro (GSAP)
 
 The wordmark is **inlined SVG**, one `<g class="wordmark__letter">` per letter,
