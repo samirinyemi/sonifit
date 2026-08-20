@@ -7,7 +7,7 @@
 <meta name="description" content="Twelve products. Built for the distance, not the photograph. A signature running collection by Soni Labs Studio.">
 <meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=45">
+<link rel="stylesheet" href="styles.css?v=48">
 
 <!-- The athlete page is one click away from five cards, and the transition
      covers the screen for ~1.4s before navigating. Fetching it up front means
@@ -26,11 +26,45 @@
 
   /* The loader only exists while this class is set. script.js clears it; if
      the scripts never run it is never added, so the page cannot be left stuck
-     behind the overlay. The timer is a second belt for a hung load. */
-  document.documentElement.classList.add('is-loading');
-  window.setTimeout(function () {
-    document.documentElement.classList.remove('is-loading');
-  }, 9000);
+     behind the overlay. The timer is a second belt for a hung load.
+
+     It runs on the first launch of a session and on a refresh, and not
+     otherwise — coming back here from the athlete page is a return, not an
+     arrival, and sitting through the count again would be tedious. Those
+     visits get the ordinary page fade and the hero intro instead.
+
+     Navigation type alone cannot tell the two apart: a first visit and a
+     click back from another page are both `navigate`. So the session marker
+     answers "have we opened this site yet", and the navigation type answers
+     "was this a refresh", and a loader is shown when either says yes. */
+  (function () {
+    var show = true;
+
+    try {
+      var entries = window.performance && performance.getEntriesByType
+        ? performance.getEntriesByType('navigation') : null;
+      var reloaded = entries && entries.length
+        ? entries[0].type === 'reload'
+        /* Deprecated, but the only signal in older engines. */
+        : !!(window.performance && performance.navigation &&
+             performance.navigation.type === 1);
+
+      show = reloaded || sessionStorage.getItem('sonifit:launched') !== '1';
+      sessionStorage.setItem('sonifit:launched', '1');
+    } catch (e) {
+      /* No sessionStorage (private mode, blocked): treat every visit as a
+         first launch. Showing it too often is a far smaller failure than a
+         brand's opening never being seen at all. */
+      show = true;
+    }
+
+    if (!show) return;
+
+    document.documentElement.classList.add('is-loading');
+    window.setTimeout(function () {
+      document.documentElement.classList.remove('is-loading');
+    }, 9000);
+  })();
 </script>
 </head>
 <body>
@@ -384,7 +418,7 @@
 <script src="assets/js/SplitText.min.js"></script>
 <script src="assets/js/ScrollTrigger.min.js"></script>
 <script src="assets/js/lenis.min.js"></script>
-<script src="script.js?v=45"></script>
-<script src="assets/js/slitscan.js?v=45"></script>
+<script src="script.js?v=48"></script>
+<script src="assets/js/slitscan.js?v=48"></script>
 </body>
 </html>

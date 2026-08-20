@@ -74,6 +74,21 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* No scrollbar. The page still scrolls by every means — wheel, trackpad,
+   keyboard, touch, and programmatically — the gutter is simply not drawn.
+   Both vendor syntaxes are needed: `scrollbar-width` covers Firefox and
+   recent Chromium, the pseudo-element covers WebKit and older Chromium.
+   Declared on html *and* body because body carries `overflow-x: hidden`, so
+   in some engines it is the element that owns the scrollport.
+
+   Side effect worth knowing: `--sbw` now measures 0, so `--u` is derived from
+   the full viewport width. That is correct — there is no longer a gutter to
+   subtract. */
+html { scrollbar-width: none; }
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
 /* Native smooth scrolling is the anchor behaviour only when Lenis is not
    running. Lenis adds `.lenis` to <html> and drives its own scrollTo, and the
    two fight each other: the browser animates the position while Lenis is also

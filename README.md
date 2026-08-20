@@ -115,6 +115,17 @@ Also at that width: the nav stays one row rather than wrapping (it fits at 12px
 even at 320px), and the meta becomes two rows, with "© 2026" pinned to the right
 edge instead of crammed against the CTA.
 
+### No scrollbar
+
+`scrollbar-width: none` plus `::-webkit-scrollbar { display: none }` on both
+`html` and `body` — body carries `overflow-x: hidden`, so in some engines it is
+the element that owns the scrollport. The page still scrolls by every means:
+wheel, trackpad, keyboard, touch and programmatically.
+
+One consequence worth knowing: `--sbw` now measures 0, so `--u` derives from
+the full viewport width. That is correct — there is no longer a gutter to
+subtract.
+
 ### Cache busting
 
 `styles.css` and `script.js` are linked with a `?v=` query. Vercel caches static
@@ -137,6 +148,26 @@ the two never overlap.
 | `0.20` | The counter runs **0 → 100** over 1.9s |
 | — | Every on-body photograph in the collection flips through the frame, stepped by the counter itself rather than its own timer, so the number and the images can never drift apart |
 | `2.25` | The whole sheet leaves upward. Nothing fades — the frame, the type and the counter stay lit and ride up on the ground they are printed on. The hero showreel starts from frame zero on the same beat, so it is already running as it is uncovered |
+
+**It runs on the first launch of a session and on a refresh, and not
+otherwise.** Coming back from the athlete page is a return, not an arrival, and
+sitting through the count again would be tedious — those visits get the page
+fade and the hero intro instead, which is arrival enough.
+
+Navigation type alone cannot tell the two apart: a first visit and a click back
+from another page are both `navigate`. So two signals are combined — a
+`sessionStorage` marker answers *have we opened this site yet*, and
+`PerformanceNavigationTiming.type` answers *was this a refresh* — and the
+loader shows when either says yes. With `sessionStorage` unavailable (private
+mode, blocked) every visit counts as a first launch: showing it too often is a
+far smaller failure than a brand's opening never being seen.
+
+| Situation | Loader |
+| --- | --- |
+| First launch of a session | yes |
+| Hard refresh | yes |
+| Back to home from the athlete page | no |
+| Back button | no |
 
 `is-loading` is set on `<html>` in the `<head>`, before first paint, and the
 overlay only exists while it is there. Every exit from `script.js` clears it —
