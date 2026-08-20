@@ -212,24 +212,24 @@ stagger that reads fine at hero scale.
 
 ### The collage entrance
 
-Each `.ath__img` already has `overflow: hidden`, so the photograph inside is
-simply moved: it climbs out from behind its own frame, five of them cascading
-0.09 apart, with a 1.18 counter-scale so it settles rather than sliding flatly.
-No fade — the frame does the masking, exactly as the hero lines and the
-wordmark do.
+Each photograph rises 12% of its own height and fades from 0 to 1 as it goes,
+five of them cascading 0.09 apart. The **frame** moves, not the picture inside
+it — an earlier version moved only the picture, which left the frame sitting
+there with its own tinted ground showing as a red rectangle waiting for the
+photograph to arrive. That ground is gone from `.ath__img` entirely, and the
+pre-state (`opacity: 0`) is on the figure, so frame and picture are hidden and
+revealed as one thing.
 
-Two things this needs, both learned the hard way:
+Two details that matter:
 
 - **The pre-state is `opacity`, never `transform`.** Same trap as the sheet
-  below: a CSS transform is read by GSAP as the start value and composed with
-  its own `yPercent`, so the tween finished at `translate(0px, 394.578px)` —
-  a full frame down and clipped away. The tween carries `opacity: 1` in its
-  *from*, releasing the CSS pre-state on the first frame.
-- **`transition: none` while `js-anim` is set.** These images carry a 0.7s
-  transform transition for the hover scale. Left on, every frame GSAP writes
-  is *also* being CSS-transitioned, and the two chase each other into sluggish,
-  unsteady motion. `clearProps` at the end of the intro hands the hover
-  transition straight back.
+  below: a CSS transform is read by GSAP as the element's start value and
+  composed with its own, so an earlier version of this tween finished at
+  `translate(0px, 394.578px)` — a full frame off target and clipped away.
+- **`yPercent`, not `y`.** The parallax scrubs `y` on these same frames. GSAP
+  keeps the two as separate components of one transform, so the entrance and
+  the drift compose instead of overwriting each other, and the intro's
+  `clearProps` is scoped to `opacity` alone so it cannot wipe the parallax.
 
 ### Two bugs worth remembering
 

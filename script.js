@@ -257,12 +257,11 @@
     var paras = [blurb].concat(q('.ath__lede, .ath__note')).filter(Boolean);
     var lineTargets = [];
 
-    // The athlete collage. Each figure already has `overflow: hidden`, so the
-    // photograph inside can simply be moved: it climbs out from behind its own
-    // frame rather than fading, which is the same masked language as the hero
-    // lines and the wordmark. The counter-scale stops it reading as a flat
-    // slide — the picture settles as it arrives.
-    var athPhotos = q('.ath__img img');
+    // The athlete collage. Each photograph rises into place and fades up as it
+    // goes, one after another — the whole frame moving, not the picture inside
+    // it. Moving only the inside meant the frame stayed put and its own ground
+    // showed as a red rectangle waiting for the photograph to arrive.
+    var athFrames = q('.ath__img');
 
     paras.forEach(function (p) {
       lineTargets = lineTargets.concat(intoLines(p));
@@ -288,9 +287,9 @@
         // outrank the stylesheet rule that fades the mark out on scroll.
         gsap.set(q('[data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
-        // Without this the inline transform outranks `.ath__img:hover img`
-        // and the photographs lose their hover scale for good.
-        gsap.set(q('.ath__img img'), { clearProps: 'all' });
+        // Opacity only. Clearing the transform as well would wipe the `y` the
+        // parallax scrubs onto these same frames.
+        gsap.set(q('.ath__img'), { clearProps: 'opacity' });
         if (rule) gsap.set(rule, { clearProps: 'all' });
         scheduleRefresh();
       }
@@ -337,15 +336,17 @@
     // from the CSS pre-state that stops a flash before GSAP takes over.
     // After the name and the descriptions have started, so the page reads
     // top-down: title, copy, then the photography filling in around it.
-    // `opacity: 1` in the *from*, as with the wordmark letters: it releases the
-    // CSS pre-state on the first frame, and from there the photograph is
-    // hidden purely by its frame's own clipping rather than by fading.
-    step(athPhotos,
-      { yPercent: 100, scale: 1.18, opacity: 1 },
+    // `yPercent`, not `y`: the parallax below scrubs `y` on these same frames,
+    // and GSAP keeps the two as separate components of one transform, so they
+    // compose instead of overwriting each other. 12% of the frame is roughly
+    // 30-40px depending on its height — enough to read as arriving, not so far
+    // that it turns the collage into a slideshow.
+    step(athFrames,
+      { yPercent: 12, opacity: 0 },
       {
         yPercent: 0,
-        scale: 1,
-        duration: 1.05,
+        opacity: 1,
+        duration: 0.9,
         ease: 'power3.out',
         stagger: { each: 0.09, from: 'start' }
       }, 0.3);
