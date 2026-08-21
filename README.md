@@ -183,8 +183,17 @@ so a failsafe exit cannot leave a frozen video behind.
 
 ## Page transition
 
-A fade. Clicking an athlete card fades the page out over 280ms and navigates;
-every page fades itself in over 320ms with a CSS animation.
+A fade. Clicking an athlete card fades a sheet in over the page across 280ms
+and navigates; every page fades that same sheet back out over 320ms with a CSS
+animation.
+
+**It fades one fixed, full-screen sheet of the page's own ground — never the
+`body`.** Fading the body composites the whole 5,000px document every frame,
+which is what turns a 280ms fade into a stutter; and `opacity` below 1 on the
+body makes it the containing block for `position: fixed`, so the nav and the
+cursor come unstuck from the viewport for the duration. One small layer costs
+nothing and moves nothing. Verified: during the fade the nav stays at `top: 0`
+and `body` stays at `opacity: 1`.
 
 **The two halves never talk to each other.** No flag, no `sessionStorage`, no
 class set in one document and read in the next — so there is no state that can
@@ -356,33 +365,33 @@ never seen again further down. On the athlete page the clearance under the
 collage is `padding-top` rather than `margin-top` for exactly this reason: a
 margin leaves the gap transparent and the name would show while crossing it.
 
-**The start is clamped to the top of the document.** A negative start is
-ordinary — it just means the title sits above the middle of the screen when the
-page is at the top, which is the athlete name's case (start `-52`). But
-ScrollTrigger's own progress then reads `0.0525` at scroll zero, so the hold
-wrote 52px before the visitor had touched anything: the name simply dropped the
-moment the first refresh landed, a second or so after load. Progress is now
-derived from a start of `max(0, start)`, which makes the offset exactly zero
-until there is real scrolling to follow.
+**The athlete name holds with CSS `position: sticky`, not with JavaScript.**
 
-**Both name copies run off one trigger, not one each.** Two triggers are two
-measurements updating in sequence, and there is always a frame where one copy
-has moved and the other has not — the outline visibly slips off its own fill.
-`holdInPlace` takes a group, measures the first element and writes the same
-offset to all of them. Verified at `dTop: 0` through the entire hold.
+This was written four times as a scrubbed ScrollTrigger writing `y`, and every
+version had a measurement bug: a shake from repeated re-measurement, a 52px
+drop the moment the first refresh landed (a negative start means progress is
+already non-zero at scroll zero), and the stroke copy slipping off its own fill
+because the two copies were separate triggers updating in sequence. Each fix
+removed one symptom and left the mechanism intact.
 
-The hold derives its start from `offsetTop` on the title's `offsetParent`,
-never from the title's own bounding box — the box carries the transform the
-hold itself writes, so measuring it would let the trigger chase its own
-output. It also refuses a measurement it knows is impossible: a refresh that
-lands before the browser has clamped scroll to a newly shortened document
-reports every position short by the overshoot, and `start` comes back
-negative. Progress then reads 1 before you have scrolled at all and the title
-is written a full section-height down — off screen, permanently, with nothing
-left to correct it. In that case the title keeps its natural position and one
-more refresh is requested a frame later, once things have settled.
+Sticky has nothing to measure and nothing to re-measure on refresh, so none of
+those failures are possible. Each copy rides its own `.ath__track` — two tracks
+rather than one wrapper, because the copies sit on opposite sides of the
+photography (fill at `z-index 1`, stroke at `3`) and a shared wrapper would be
+a single stacking context. The tracks are geometrically identical, so the
+copies cannot drift apart. The track runs from the name's position to the
+bottom of the collage plus the clearance under it, so the name stays put until
+the statement below arrives over it.
 
-Pins use `pinSpacing: false` — the titles are absolutely positioned inside
+Verified: holds at screen y `536` from scroll 0 through 600, releases and
+scrolls away after, `dTop` and `dLeft` between the copies `0` at every
+position, and zero ScrollTriggers left on the name.
+
+Note for anyone editing this: **no ancestor of a sticky element may have a
+transform** — it would silently become the containing block and stickiness
+would stop working.
+
+Pins use `pinSpacing: false`Pins use `pinSpacing: false` — the titles are absolutely positioned inside
 their scatter canvases, and spacing would push the whole canvas down. Pinning
 is gated to `min-width: 1280px` via `gsap.matchMedia()`; below that the
 scatters become columns and a pin would read as a glitch.

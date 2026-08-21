@@ -7,7 +7,7 @@
 <meta name="description" content="Kipchoge is the most decorated marathon runner in history and the only person to have covered the distance under two hours.">
 <meta name="theme-color" content="#fff5f5">
 <link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="styles.css?v=49">
+<link rel="stylesheet" href="styles.css?v=51">
 <script>
   /* Set before first paint so the hero never flashes its finished state. */
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -21,6 +21,8 @@
 </script>
 </head>
 <body class="page-athlete">
+
+<div class="fade" aria-hidden="true"></div>
 
 <a class="skip-link" href="#story">Skip to the story</a>
 
@@ -46,7 +48,15 @@
     <div class="shell">
       <div class="scatter scatter--athlete" data-node-id="47:518">
 
-        <h1 class="ath__title" id="ath-title" data-anim data-node-id="42:363">Eliud Kipchoge</h1>
+        <!-- Each copy rides its own sticky track. Two tracks rather than one
+             shared wrapper because they sit on opposite sides of the
+             photography: the fill below it, the stroke above it. A single
+             wrapper would be one stacking context and the effect would be
+             lost. The tracks are geometrically identical, so the copies
+             cannot drift apart. -->
+        <div class="ath__track ath__track--under">
+          <h1 class="ath__title" id="ath-title" data-anim data-node-id="42:363">Eliud Kipchoge</h1>
+        </div>
 
         <div class="ath__collage">
           <figure class="ath__img" style="--l:0;--t:0;--w:335;--h:335" data-node-id="47:523">
@@ -76,7 +86,9 @@
 
         <!-- Same words again, stroke only. It sits above the photography, so the
              tail of the name reads as an outline wherever an image covers it. -->
-        <span class="ath__title ath__title--outline" aria-hidden="true" data-node-id="42:502">Eliud Kipchoge</span>
+        <div class="ath__track ath__track--over">
+          <span class="ath__title ath__title--outline" aria-hidden="true" data-node-id="42:502">Eliud Kipchoge</span>
+        </div>
 
       </div>
     </div>
@@ -152,6 +164,6 @@
 <script src="assets/js/SplitText.min.js"></script>
 <script src="assets/js/ScrollTrigger.min.js"></script>
 <script src="assets/js/lenis.min.js"></script>
-<script src="script.js?v=49"></script>
+<script src="script.js?v=51"></script>
 </body>
 </html>

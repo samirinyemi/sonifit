@@ -286,11 +286,11 @@
         // scrolled snapped the name to zero, and the next scroll event put it
         // straight back. That is the jump. The intro set the opacity; the hold
         // owns the transform.
-        var titleCopies = q('.ath__title');
-        gsap.set(q('[data-anim]').concat(q('.wordmark__letter')).filter(function (el) {
-          return titleCopies.indexOf(el) < 0;
-        }), { clearProps: 'all' });
-        gsap.set(titleCopies, { clearProps: 'opacity' });
+        gsap.set(q('[data-anim]').concat(q('.wordmark__letter')), { clearProps: 'all' });
+        // Both name copies, including the stroke-only one, which has no
+        // `data-anim` of its own. Sticky owns their position now, so clearing
+        // everything the intro wrote is exactly right.
+        gsap.set(q('.ath__title'), { clearProps: 'all' });
         gsap.set(q('.ath__lede, .ath__note'), { clearProps: 'all' });
         // Opacity only. Clearing the transform as well would wipe the `y` the
         // parallax scrubs onto these same frames.
@@ -904,35 +904,12 @@
       });
     }
 
-    gsap.matchMedia().add('(min-width: 1280px)', function () {
-      // Both copies of the name hold together — the solid one under the
-      // photography and the stroke-only one above it — so the outline keeps
-      // registering with its own fill and with the pictures moving past.
-      //
-      // **One** trigger for the pair, not one each. Two triggers are two
-      // measurements updating in sequence, and there is always a frame where
-      // one copy has moved and the other has not; the outline visibly slips
-      // off its fill.
-      //
-      // The hold runs until the middle of the section below reaches the middle
-      // of the screen. That section carries an opaque ground, so it arrives
-      // over the held name and takes it out of the page — the name is never
-      // seen again further down. Ending on the hero's own bottom instead would
-      // release it too early, in open space, where it just slides away.
-      var next = document.querySelector('.ath-statement--first');
-      var copies = q('.ath__title');
-      var holds = [holdInPlace(copies, {
-        endTrigger: next || section,
-        end: next ? 'center center' : 'bottom center'
-      })];
-
-      // Same reason as the home page: clear the offsets by hand when the
-      // breakpoint stops matching, or the names are left off-screen.
-      return function () {
-        holds.forEach(function (st) { if (st) st.kill(); });
-        gsap.set(copies, { clearProps: 'transform' });
-      };
-    });
+    // The name holds via `position: sticky` in the stylesheet — see
+    // `.ath__track`. It used to be a scrubbed ScrollTrigger writing `y`, and
+    // every version of that carried a measurement bug: a 52px drop the moment
+    // the first refresh landed, the outline slipping off its own fill because
+    // the two copies were separate triggers, a shake from repeated
+    // re-measurement. Sticky has nothing to measure and nothing to re-measure.
   }
 
   // A block of copy arrives line by line, each line climbing out from behind
@@ -1021,7 +998,7 @@
       if (!e.persisted) return;
       leaving = false;
       root.classList.remove('is-leaving');
-      gsap.set(document.body, { clearProps: 'opacity' });
+      gsap.set(q('.fade'), { clearProps: 'opacity' });
       if (lenis) lenis.start();
     });
   }
@@ -1033,8 +1010,14 @@
     root.classList.add('is-leaving');
     if (lenis) lenis.stop();
 
-    gsap.to(document.body, {
-      opacity: 0,
+    var sheet = document.querySelector('.fade');
+    if (!sheet) {
+      window.location.href = href;
+      return;
+    }
+
+    gsap.to(sheet, {
+      opacity: 1,
       duration: 0.28,
       ease: 'power2.inOut',
       onComplete: function () { window.location.href = href; }
@@ -1045,7 +1028,7 @@
       if (!leaving) return;
       leaving = false;
       root.classList.remove('is-leaving');
-      gsap.to(document.body, { opacity: 1, duration: 0.2 });
+      gsap.to(sheet, { opacity: 0, duration: 0.2 });
       if (lenis) lenis.start();
     }, 3000);
   }

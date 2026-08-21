@@ -947,11 +947,37 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 }
 .ath__img:hover img { transform: scale(1.03); }
 
-.ath__title {
+/* The name holds in the middle of the screen while the photography scrolls
+   past it, then goes behind the section below.
+
+   This is `position: sticky`, not a scroll-driven tween, and that is the whole
+   point: there is nothing to measure, nothing to re-measure on refresh, and no
+   frame in which one copy has been updated and the other has not. Four
+   JavaScript versions of this hold each fixed one symptom and introduced
+   another — a 52px drop the moment the first refresh landed, an outline
+   slipping off its own fill, a shake from repeated re-measurement. A sticky
+   element cannot do any of those things.
+
+   The track is how far the name is allowed to hold. It runs from the name's
+   own position to the bottom of the collage plus the clearance under it, so
+   the name stays put until the statement below arrives over the top of it. */
+.ath__track {
   position: absolute;
   left: calc(234 * var(--u));
   top: calc(314 * var(--u));
-  z-index: 1;
+  height: calc(100% - (314 * var(--u)) + (82 * var(--u)) + 100px);
+  pointer-events: none;
+}
+
+/* Opposite sides of the photography, which sits at z-index 2. */
+.ath__track--under { z-index: 1; }
+.ath__track--over { z-index: 3; }
+
+.ath__title {
+  position: sticky;
+  /* Centred in the viewport. 0.63em is half a line at this line-height, so the
+     name holds on the middle of the screen rather than hanging from it. */
+  top: calc(50svh - 0.63em);
   margin: 0;
   font-weight: var(--w-bold);
   font-size: max(40px, calc(135 * var(--u)));
@@ -961,7 +987,6 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 }
 
 .ath__title--outline {
-  z-index: 3;
   color: transparent;
   -webkit-text-stroke: max(1px, calc(2 * var(--u))) var(--red);
   pointer-events: none;
@@ -1369,34 +1394,45 @@ hr { border: 0; margin: 0; color: inherit; }   /* UA sets hr colour to gray */
 
 /* A fade, and nothing else.
 
-   The two halves are completely independent — there is no flag, no shared
-   state and no handoff between the documents. The leaving page fades itself
-   out to its own ground; the arriving page fades itself in from the same
-   ground, with a plain CSS animation that needs no script and always
-   completes. Nothing can be left half-done, and a direct visit gets exactly
-   the same gentle arrival as a click-through.
+   It fades one fixed, full-screen sheet of the page's own ground — never the
+   `body`. Fading the body means compositing the whole 5,000px document every
+   frame, which is exactly the sort of thing that turns a 280ms fade into a
+   stutter; and `opacity` below 1 on the body makes it the containing block for
+   `position: fixed`, so the nav and the cursor would come unstuck from the
+   viewport for the duration. One small layer costs nothing and moves nothing.
+
+   The two halves are completely independent — no flag, no shared state, no
+   handoff between documents. The leaving page fades the sheet in over its own
+   content; the arriving page fades the same sheet back out, with a CSS
+   animation that needs no script and always completes. Nothing can be left
+   half-done, and a direct visit gets the same arrival as a click-through.
 
    Because both pages share `--bg`, the ground never changes across the
-   navigation: content dissolves out, the ground holds, content dissolves in.
+   navigation: content dissolves out, the ground holds, content dissolves in. */
+.fade {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: var(--bg);
+  pointer-events: none;
+  opacity: 0;
+}
 
-   `both` keeps opacity at 0 through the animation's fill phase, so there is
-   no frame of fully-drawn page before it starts. */
 @media (prefers-reduced-motion: no-preference) {
-  body { animation: page-in 320ms var(--ease) both; }
+  /* Every load starts with the sheet over the page and clears it. `both` holds
+     opacity at 1 through the fill phase, so there is no frame of bare page
+     before it starts. */
+  .fade { animation: page-in 320ms var(--ease) both; }
 
   @keyframes page-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from { opacity: 1; }
+    to   { opacity: 0; }
   }
 
-  /* Set by the click handler, which fades the page out and then navigates.
-     Nothing behind it should move while it goes.
-
-     `animation: none` is load-bearing. A CSS animation wins over an inline
-     style in the cascade, so with `page-in` still filling at opacity 1 the
-     script's fade was written and then ignored — the page simply never faded.
-     Cancelling the arrival animation hands the property back. */
-  .is-leaving body { animation: none; }
+  /* `animation: none` is load-bearing. A CSS animation beats an inline style
+     in the cascade, so with `page-in` still filling at opacity 0 the script's
+     fade was written and then ignored — the page simply never faded. */
+  .is-leaving .fade { animation: none; }
 
   .is-leaving,
   .is-leaving body { overflow: hidden; }
