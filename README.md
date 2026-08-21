@@ -356,6 +356,21 @@ never seen again further down. On the athlete page the clearance under the
 collage is `padding-top` rather than `margin-top` for exactly this reason: a
 margin leaves the gap transparent and the name would show while crossing it.
 
+**The start is clamped to the top of the document.** A negative start is
+ordinary — it just means the title sits above the middle of the screen when the
+page is at the top, which is the athlete name's case (start `-52`). But
+ScrollTrigger's own progress then reads `0.0525` at scroll zero, so the hold
+wrote 52px before the visitor had touched anything: the name simply dropped the
+moment the first refresh landed, a second or so after load. Progress is now
+derived from a start of `max(0, start)`, which makes the offset exactly zero
+until there is real scrolling to follow.
+
+**Both name copies run off one trigger, not one each.** Two triggers are two
+measurements updating in sequence, and there is always a frame where one copy
+has moved and the other has not — the outline visibly slips off its own fill.
+`holdInPlace` takes a group, measures the first element and writes the same
+offset to all of them. Verified at `dTop: 0` through the entire hold.
+
 The hold derives its start from `offsetTop` on the title's `offsetParent`,
 never from the title's own bounding box — the box carries the transform the
 hold itself writes, so measuring it would let the trigger chase its own

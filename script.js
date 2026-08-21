@@ -600,11 +600,18 @@
   // So: trigger on the element's offsetParent, which is stable, and derive the
   // start from `offsetTop`. Offsets are layout values, unaffected by any
   // transform, so the measurement can never chase itself.
-  function holdInPlace(el, opts) {
-    if (!el || typeof window.ScrollTrigger === 'undefined') return;
+  function holdInPlace(els, opts) {
+    els = [].concat(els).filter(Boolean);
+    if (!els.length || typeof window.ScrollTrigger === 'undefined') return;
 
     gsap.registerPlugin(window.ScrollTrigger);
 
+    // One trigger for the whole group, measured off the first element. The
+    // athlete name is set twice — a solid copy and a stroke-only one — and
+    // giving each its own trigger meant two independent measurements updating
+    // in sequence: there is always a frame where one has moved and the other
+    // has not, and the outline slips out of register with its own fill.
+    var el = els[0];
     var anchor = el.offsetParent;
     if (!anchor) return;
 
@@ -625,22 +632,34 @@
     // every position short by the overshoot. The whole range then lands *above*
     // the top of the document, progress reads as 1 before you have scrolled at
     // all, and the title is written a full section-height down: off screen,
-    // permanently, with nothing left to trigger a correction.
+    // permanently, with nothing left to trigger a correction. The test for that
+    // is `end <= 0`, not `start < 0`.
     //
-    // The test for that is `end <= 0`, not `start < 0`. A negative start on its
-    // own is ordinary and correct: it means the element is near the top of the
-    // document and the hold is already slightly engaged at scroll zero, which
-    // is exactly the case for the athlete name (start -57). Guarding on it
-    // snapped the title back to zero on every update and asked for a refresh
-    // that re-ran the same check — eight rounds of measure, snap, re-measure.
-    // That is a shake, not a fix.
+    // A negative start on its own is ordinary — it means the element sits above
+    // the middle of the screen when the page is at the top, which is exactly
+    // the athlete name's case (start -52). But ScrollTrigger's own progress
+    // then reads 0.0525 at scroll zero, and the hold writes 52px before the
+    // visitor has touched anything: the name simply drops the moment the first
+    // refresh lands, a second or so after load. So the start is clamped to the
+    // top of the document and progress is derived from that, which makes the
+    // offset exactly zero until there is real scrolling to follow.
     function apply(self) {
       if (self.end <= 0 || self.end <= self.start) {
-        gsap.set(el, { y: 0 });
+        gsap.set(els, { y: 0 });
         scheduleRemeasure();
         return;
       }
-      gsap.set(el, { y: (self.end - self.start) * self.progress });
+
+      var start = Math.max(0, self.start);
+      var span = self.end - start;
+      if (span <= 0) {
+        gsap.set(els, { y: 0 });
+        return;
+      }
+
+      var p = (self.scroll() - start) / span;
+      p = p < 0 ? 0 : (p > 1 ? 1 : p);
+      gsap.set(els, { y: span * p });
     }
   }
 
@@ -888,11 +907,13 @@
     gsap.matchMedia().add('(min-width: 1280px)', function () {
       // Both copies of the name hold together — the solid one under the
       // photography and the stroke-only one above it — so the outline keeps
-      // registering with the pictures as they move past. They share a single
-      // trigger element: measured separately, the stroked copy is a couple of
-      // dozen pixels taller and would start at a different scroll position.
-      // Both copies share an offsetParent and an offsetTop, so they compute
-      // the same start without needing to share a trigger element.
+      // registering with its own fill and with the pictures moving past.
+      //
+      // **One** trigger for the pair, not one each. Two triggers are two
+      // measurements updating in sequence, and there is always a frame where
+      // one copy has moved and the other has not; the outline visibly slips
+      // off its fill.
+      //
       // The hold runs until the middle of the section below reaches the middle
       // of the screen. That section carries an opaque ground, so it arrives
       // over the held name and takes it out of the page — the name is never
@@ -900,12 +921,10 @@
       // release it too early, in open space, where it just slides away.
       var next = document.querySelector('.ath-statement--first');
       var copies = q('.ath__title');
-      var holds = copies.map(function (copy) {
-        return holdInPlace(copy, {
-          endTrigger: next || section,
-          end: next ? 'center center' : 'bottom center'
-        });
-      });
+      var holds = [holdInPlace(copies, {
+        endTrigger: next || section,
+        end: next ? 'center center' : 'bottom center'
+      })];
 
       // Same reason as the home page: clear the offsets by hand when the
       // breakpoint stops matching, or the names are left off-screen.
